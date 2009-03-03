@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
+#region extras - don't really need this part
+
 /// <summary>
 /// Classful of static methods exposing functionality from Win32 API
+/// You do NOT need to look at this, only if you are interested.
 /// </summary>
 public static class Win32
 {
@@ -80,4 +83,4 @@ public static class Win32Helper
   }
 }
 
-
+#endregion

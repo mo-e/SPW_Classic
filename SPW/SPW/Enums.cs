@@ -4,7 +4,8 @@
   Torpedo,
   Hyperspace,
   Alarm,
-  BlowUp
+  BlowUp,
+  Death
 }
 
 
@@ -33,7 +34,9 @@ public enum NetState
   /// Connected to network and another player is present as well
   /// </summary>
   Connected
-  
+
+  // You can add more states here if you like
+
 }
 
 

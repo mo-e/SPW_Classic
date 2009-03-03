@@ -19,15 +19,19 @@ using Microsoft.Xna.Framework.Storage;
 
 public class Controller : GameComponent
 {
+  // keep BOTH the previous keyboard state (last frame)
+  // and PRESENT keyboard state (this frame).
+  // Reason explained at end of this file,
+  // near the JustPressed() function
   private KeyboardState kbPrevState, kbCurrState;
   private MouseState msPrevState, msCurrState;
 
   private Dictionary<PlayerIndex, GamePadState> gpPrevStates, gpCurrStates;
   private List<PlayerIndex> pis; // connected controllers.
 
-  private SPW game ;
+  private SPW game;
 
-  private NetworkListener netConn ;
+  private NetworkListener netConn;
 
   public Controller( Game g )
     : base( g )  // call base class ctor
@@ -37,8 +41,8 @@ public class Controller : GameComponent
 
 
 
-    netConn = new NetworkListener() ;
-    
+    netConn = new NetworkListener();
+
 
 
     //find number of controllers attached.
@@ -139,7 +143,7 @@ public class Controller : GameComponent
         RunTitleScreenControls();
         break;
     }
-      
+
   }
 
 
@@ -158,7 +162,7 @@ public class Controller : GameComponent
           //netConn.Shutdown();
 
           SPW.netState = NetState.Disconnected;
-          SPW.gameState = GameState.TitleScreen ;
+          SPW.gameState = GameState.TitleScreen;
         }
 
         break;
@@ -184,7 +188,7 @@ public class Controller : GameComponent
   {
     if( JustPressed( Keys.Space ) )
     {
-      game.ResetLocalGame() ;
+      game.ResetLocalGame();
     }
 
     if( JustPressed( Keys.C ) )
@@ -198,7 +202,7 @@ public class Controller : GameComponent
       }
       else
       {
-        SPW.sw[ "error"  ] = new StringItem( "Couldn't connect to the server!", 40, 220, 4.0f, Color.Red ) ;
+        SPW.sw[ "error" ] = new StringItem( "Couldn't connect to the server!", 40, 220, 4.0f, Color.Red );
       }
     }
   }
@@ -215,9 +219,9 @@ public class Controller : GameComponent
     Ship player2 = SPW.world.player2;
 
     // If the 1p controller is connected, then use it
-    if( pis.Contains(PlayerIndex.One) )
+    if( pis.Contains( PlayerIndex.One ) )
     {
-      RunPlayerFromController( PlayerIndex.One, player1 ) ;
+      RunPlayerFromController( PlayerIndex.One, player1 );
     }
     else
     {
@@ -244,7 +248,7 @@ public class Controller : GameComponent
         if( IsPressed( Keys.NumPad6 ) )
           player1.RotateRight();
 
-        if( IsPressed( Keys.NumPad7 ) )
+        if( JustPressed( Keys.NumPad7 ) )
           player1.ShootPhasors();
 
         if( IsPressed( Keys.NumPad8 ) )
@@ -288,7 +292,7 @@ public class Controller : GameComponent
         if( IsPressed( Keys.D ) )
           player2.RotateRight();
 
-        if( IsPressed( Keys.Q ) )
+        if( JustPressed( Keys.Q ) )
           player2.ShootPhasors();
 
         if( IsPressed( Keys.W ) )
@@ -327,7 +331,7 @@ public class Controller : GameComponent
       if( IsPressed( pNum, Buttons.DPadRight ) )
         playerShip.RotateRight();
 
-      if( IsPressed( pNum, Buttons.X ) )
+      if( JustPressed( pNum, Buttons.X ) )
         playerShip.ShootPhasors();
 
       if( IsPressed( pNum, Buttons.RightTrigger ) )
@@ -352,8 +356,34 @@ public class Controller : GameComponent
 
 
   #region functions that check for key states
+
+  /// <summary>
+  /// Tells you if "key" was JUST PRESSED DOWN.
+  /// 
+  /// JUST PRESSED DOWN means the key was
+  /// UP in previous frame, but is DOWN in
+  /// THIS frame.
+  /// 
+  /// If you press and hold a key, for no matter
+  /// how many seconds you hold it down for,
+  /// you'll only have JustPressed return true ONCE.
+  /// </summary>
+  /// <param name="key">The key to check if it was JUST pressed down</param>
   public bool JustPressed( Keys key )
   {
+    // See, to determine if a button was JUST
+    // pressed, we have to know the key
+    // state of all the keys during the PREVIOUS
+    // frame of the game.
+
+    // So that is why we keep TWO structs:
+    //   kbCurrState is the CURRENT state of 
+    //   the keyboard for THIS frame,
+    //   kbPrevState REMEMBERS whta the state
+    //   of the keyboard was in the LAST frame
+
+    // A key was only JUST PRESSED if it was
+    // UP last frame and is DOWN this frame.
     if( kbCurrState.IsKeyDown( key ) &&
         kbPrevState.IsKeyUp( key ) )
       return true;
@@ -361,6 +391,14 @@ public class Controller : GameComponent
       return false;
   }
 
+
+  /// <summary>
+  /// Tells you if a button was JUST PRESSED DOWN on
+  /// a game pad 
+  /// </summary>
+  /// <param name="which">The game pad index to check
+  /// (PlayerIndex.One checks gamepad #1, etc)</param>
+  /// <param name="button">The button to check if it was JUST pressed down</param>
   public bool JustPressed( PlayerIndex which, Buttons button )
   {
     if( gpCurrStates[ which ].IsButtonDown( button ) &&
@@ -370,6 +408,10 @@ public class Controller : GameComponent
       return false;
   }
 
+  /// <summary>
+  /// Returns true if a key was just let go of
+  /// </summary>
+  /// <param name="key">The key to check if it was just let go of</param>
   public bool JustReleased( Keys key )
   {
     if( kbCurrState.IsKeyUp( key ) &&
@@ -379,6 +421,12 @@ public class Controller : GameComponent
       return false;
   }
 
+  /// <summary>
+  /// Returns true if a gamepad's button was just let go of
+  /// </summary>
+  /// <param name="which">GamePad # to check (PlayerIndex.One checks
+  /// Player 1's gamepad)</param>
+  /// <param name="button">Button to check if its just been let go of</param>
   public bool JustReleased( PlayerIndex which, Buttons button )
   {
     if( gpCurrStates[ which ].IsButtonUp( button ) &&
@@ -388,11 +436,21 @@ public class Controller : GameComponent
       return false;
   }
 
+  /// <summary>
+  /// Tells you if a key is BEING HELD DOWN
+  /// </summary>
+  /// <param name="key">Key to check if its being held down</param>
   public bool IsPressed( Keys key )
   {
     return kbCurrState.IsKeyDown( key );
   }
 
+  /// <summary>
+  /// Tells you if a button on a gamepad is being held down
+  /// </summary>
+  /// <param name="which">GamePad # to check (PlayerIndex.One checks
+  /// Player 1's gamepad)</param>
+  /// <param name="button">Button to check if its down</param>
   public bool IsPressed( PlayerIndex which, Buttons button )
   {
     return gpCurrStates[ which ].IsButtonDown( button );
