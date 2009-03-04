@@ -462,7 +462,7 @@ public class Ship : MovingSprite
 
       state = ShipState.Hyperspace;
 
-      velocity = new Vector2( (float)SPW.rand.NextDouble() * 5.0f, (float)SPW.rand.NextDouble() * 5.0f );
+      velocity = new Vector2( (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f, (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f );
 
       // play the sound
       SPW.world.sfx[ SFX.Hyperspace ].Play();
@@ -485,9 +485,12 @@ public class Ship : MovingSprite
 
   public void Cloak()
   {
-    if( this.energy > PENALTY_CLOAK_PER_SEC )
+    if( this.state != ShipState.Hyperspace )
     {
-      state = ShipState.Cloaking;
+      if( this.energy > PENALTY_CLOAK_PER_SEC )
+      {
+        state = ShipState.Cloaking;
+      }
     }
   }
 
