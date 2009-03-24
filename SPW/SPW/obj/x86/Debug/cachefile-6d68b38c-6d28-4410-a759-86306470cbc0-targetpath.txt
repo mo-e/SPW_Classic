@@ -1,7 +1,12 @@
 Content\screenwriterFont.xnb
+Content\Fonts\DefaultFont.xnb
+Content\Fonts\DefaultHeading.xnb
+Content\loggerFont.xnb
 Content\alarm.xnb
 Content\blow_up.xnb
 Content\hyperspace.xnb
 Content\phasor.xnb
 Content\torpedo.xnb
 Content\explode.xnb
+Content\Textures\Black.xnb
+Content\Textures\DefaultStyle.xnb

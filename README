@@ -10,3 +10,9 @@ Mar 2/09
 +Phasors
 +Some more comments in some of the files
 
+Mar 15/09
++Minor change to Sprite.cs to make projectile-ship collisions more accurate
++ScreenWriter now thread-safe
+
+Mar 24/09
++Networking

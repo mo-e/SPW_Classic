@@ -73,7 +73,7 @@ public class Sprite
       new Vector3( this.position.X, this.position.Y, 0.0f ), this.GetApproxRadius() );
 
     BoundingSphere thatSphere = new BoundingSphere(
-      new Vector3( other.position.X, other.position.Y, 0.0f ), this.GetApproxRadius() );
+      new Vector3( other.position.X, other.position.Y, 0.0f ), other.GetApproxRadius() );
 
     if( thisSphere.Intersects( thatSphere ) )
       return true;
@@ -449,23 +449,26 @@ public class Ship : MovingSprite
 
   public void BeginHyperspace()
   {
-    if( energy > PENALTY_HYPERSPACE )
+    if( state != ShipState.Hyperspace )
     {
-      // hyperspace costs 8 units of energy
-      energy -= PENALTY_HYPERSPACE;
+      if( energy > PENALTY_HYPERSPACE )
+      {
+        // hyperspace costs 8 units of energy
+        energy -= PENALTY_HYPERSPACE;
 
-      // set hyperspace time to max hyperspace length
-      // If you change HYPERSPACE_LENGTH to something
-      // bigger or smaller, then hyperspace will last
-      // longer or shorter.
-      hyperspaceTimeRem = HYPERSPACE_LENGTH;
+        // set hyperspace time to max hyperspace length
+        // If you change HYPERSPACE_LENGTH to something
+        // bigger or smaller, then hyperspace will last
+        // longer or shorter.
+        hyperspaceTimeRem = HYPERSPACE_LENGTH;
 
-      state = ShipState.Hyperspace;
+        state = ShipState.Hyperspace;
 
-      velocity = new Vector2( (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f, (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f );
+        velocity = new Vector2( (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f, (float)( 0.5f - SPW.rand.NextDouble() ) * 10.0f );
 
-      // play the sound
-      SPW.world.sfx[ SFX.Hyperspace ].Play();
+        // play the sound
+        SPW.world.sfx[ SFX.Hyperspace ].Play();
+      }
     }
   }
 
@@ -581,7 +584,8 @@ public class Ship : MovingSprite
       Projectile torpedo = new Projectile();
 
       Vector2 heading = GetHeading();
-      torpedo.position = this.position + 10.0f * heading;
+      torpedo.position = this.position + 15.0f * heading /* start torpedo out some dist away from shooter in direction of his shot heading so
+                                                          * player doesn't basically shoot himself with his own torpedos immediately */ ;
       torpedo.rot = this.rot;
       torpedo.velocity = this.velocity + ( heading * Projectile.NORMAL_START_SPEED );
 
@@ -626,7 +630,7 @@ public class Ship : MovingSprite
   public void DrawHealth( SpriteBatch spriteBatch )
   {
     string txt = String.Format( "E: {0:f0}   S: {1:f0}", energy, shield );
-    Vector2 strlen = SPW.sw.sf.MeasureString( txt );
+    Vector2 strlen = ScreenWriter.font.MeasureString( txt );
 
     if( this.playerNumber == 1 )
     {
@@ -654,7 +658,7 @@ public class Ship : MovingSprite
   {
     // Get approximate height of text, using M as
     // representative of the font
-    Vector2 DimsOfM = SPW.sw.sf.MeasureString( "M" );
+    Vector2 DimsOfM = ScreenWriter.font.MeasureString( "M" );
     float textHeight = DimsOfM.Y;
     float textWidth = DimsOfM.X;
 
@@ -736,16 +740,16 @@ public class Ship : MovingSprite
 
   private string vecString( Vector2 v )
   {
-    return String.Format( "{0:f2}, {1:f2}", v.X, v.Y );
+    return String.Format( "( {0:f2}, {1:f2} )", v.X, v.Y );
   }
 
   public override string ToString()
   {
-    return base.ToString() + " " +
-      state + " " +
-      vecString( position ) + " " +
-      vecString( velocity ) +
-      String.Format( "rot={0:f2}", rot );
+    return base.ToString() + " " + state +
+      " shld=" + shield + " enrg=" + energy + 
+      String.Format( " rot={0:f2}", rot ) +
+      " pos=" + vecString( position ) +
+      " vel=" + vecString( velocity ) ;
   }
 }
 

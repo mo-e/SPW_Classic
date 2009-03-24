@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Microsoft.Xna.Framework.Net;
 using Microsoft.Xna.Framework.Storage;
+
+using WindowSystem;
 #endregion
 
 
@@ -18,6 +20,22 @@ using Microsoft.Xna.Framework.Storage;
 // MAIN GAME FILE
 // This file contains the core of the game.
 
+// Do a project-wide search for ###
+// to find the database sections you should work on.
+
+
+
+#region Note about multi-game_server.py
+/*
+ * When using the multi-game_server.py file, to host
+ * several games in a row, this game sometimes hangs at
+ * "You are waiting for another player to connect at the server..."
+ *
+ * To fix:  Just press backspace and have THE OTHER GUY
+ * try connecting first.  Or, you can exit and restart the game.
+ * 
+ */
+#endregion
 
 #region game description
 // Destroy the other ship with PHOTON TORPEDOS or
@@ -46,6 +64,16 @@ public class SPW : Microsoft.Xna.Framework.Game
   SpriteBatch spriteBatch;
 
   #region public static variable declarations
+  // Provides cool windows with text input, 
+  // originally by Aaron MacDougall, slightly modded by me
+  // original source is located at http://www.codeplex.com/wsx/
+  public static Windowing windowing;
+
+  // Disk path for file output dumps
+  // (used for log files and screenshots)
+  public static string path = ""; //!! change to wherever you want your log files dumped
+
+  public static bool showDebug = true ;
 
   // Because these are STATIC variables, they
   // are accessible game-wide, by typing in
@@ -69,11 +97,17 @@ public class SPW : Microsoft.Xna.Framework.Game
   // state of the game.  You're either at the TitleScreen,
   // playing a LocalGame (2 players at same machine)
   // or playing a NetGame (which is what _lab 2_ is about completing!)
-  public static GameState gameState;
+  public volatile static GameState gameState;
 
   // if in a netgame, then this is the state of the networked game.
-  public static NetState netState;
+  public volatile static NetState netState;
 
+  /// <summary>
+  /// The global frame counter to keep both game engines synchronized.
+  /// We basically want "currentFrame" to match up for both players
+  /// as closely as possible as the game proceeds.
+  /// </summary>
+  public static int currentFrame = 0 ;
 
   /// <summary>
   /// Static member accessible from anywhere,
@@ -90,6 +124,12 @@ public class SPW : Microsoft.Xna.Framework.Game
   /// </summary>
   public static ScreenWriter sw;
 
+  /// <summary>
+  /// Logs to the screen, a file, or the console.
+  /// </summary>
+  public static Logger logger ;
+  
+
   // Game component - the controller object.
   // The Controller object contains ALL the code
   // that deals with user input and causes
@@ -103,6 +143,9 @@ public class SPW : Microsoft.Xna.Framework.Game
     graphics = new GraphicsDeviceManager( this );
     Content.RootDirectory = "Content";
 
+    this.IsMouseVisible = true;
+
+    #region creating and adding the game component objects Controller, ScreenWriter, Logger, and Windowing
     // instantiate the Controller
     c = new Controller( this );
 
@@ -192,6 +235,15 @@ public class SPW : Microsoft.Xna.Framework.Game
     // to do with one "COMPONENT" of the game into one file.
 
 
+    logger = new Logger( this, true );
+    this.Components.Add( logger ) ;
+
+    // Create the Windowing object.
+    // The source code for this system
+    // by 'Aaron MacDougall', is on codeplex
+    // http://www.codeplex.com/wsx/
+    windowing = new Windowing( this );
+    #endregion
 
     // Initialize the game state
     gameState = GameState.TitleScreen;  // let game start @ title screen
@@ -204,6 +256,16 @@ public class SPW : Microsoft.Xna.Framework.Game
     this.graphics.PreferredBackBufferHeight = world.ScreenHeight;
     this.graphics.PreferredBackBufferWidth = world.ScreenWidth;
 
+
+    // Tell player about how to toggle debug
+    Color tBlueViolet = Color.BlueViolet;
+    tBlueViolet.A = 0;
+    sw[ "more" ] = new StringItem( "Press '8' to toggle debug messages", 40, world.ScreenHeight - 40, 5.0f, Color.Red, tBlueViolet );
+
+    // Start with debug messages not being displayed on screen
+    // (press '8' to toggle)
+    ToggleDebug();
+    
   }
   #endregion
 
@@ -239,9 +301,12 @@ public class SPW : Microsoft.Xna.Framework.Game
     world.sfx.Add( SFX.Phasor, Content.Load<SoundEffect>( "phasor" ) );
     world.sfx.Add( SFX.Torpedo, Content.Load<SoundEffect>( "torpedo" ) );
     world.sfx.Add( SFX.Death, Content.Load<SoundEffect>( "explode" ) );  // this is from warcraft 3, orc building
+
+
+    // Initialize Aaron's windowing system
+    windowing.LoadContent();
   }
   #endregion
-
 
   // The MAIN update routine.  Called once per game frame
   // by xna framework.
@@ -296,35 +361,79 @@ public class SPW : Microsoft.Xna.Framework.Game
       // are we running a netgame?
       case GameState.NetGame:
 
-        // THIS IS THE PART YOU MUST WORK ON.
-        if( netState == NetState.Connected )
+        //////////////////////////////////
+        //////////////////////////////////
+        // The UPDATE() region for a NetGame.
+        // Here is the thing.  When in a NetGame,
+        // there are TIMES WHEN we DO NOT want the
+        // player's local simuation to advance. Basically
+        // we need to "put the game engine on hold" WHEN
+        // a player is running "too far ahead" of
+        // his opponent (e.g. say I'm on frame 110, and
+        // my opponent is only on frame 90.  Then I should
+        // definitely slow down to let him catch up,
+        // otherwise the game could fall out of sync).
+        //
+        // Advance game state if Connected
+        // OR if TooFarBehind (in order to catch up)
+        if( netState == NetState.Connected ||
+            netState == NetState.TooFarBehind )
+        {
           RunGame( gameTime );
 
+          // Use the logger to dump game state info to the log file
+          // This is a helpful debugging technique
+          LogGameState();
+        }
+        //
+        //////////////////////////////////
+        //////////////////////////////////
         break;
+
+      case GameState.Testing:
+        // This is just a test function I threw in here
+        // to test the response times to the server.
+        // You can ignore this part.
+        if( SPW.netState == NetState.Connected )
+          c.netConn.TestNetwork();
+        else
+          SPW.sw[ "teststart" ] = new StringItem( "Please be sure to connect another player in test mode as well, now.", Color.White, 0 );
+        break;
+
     }
 
     // check for screenshot.
     // take a screenshot by pressing '9'
     checkScreenShot();
-
+    
     base.Update( gameTime );
   }
 
+  #region rrrrrrrrrrrrrrrrrun
   // Code that runs when sitting at the title screen.
   private void RunTitle( GameTime gameTime )
   {
-    // Just display messages telling the player what to do
-    sw[ "Title" ] = new StringItem( "SPACE WARS", 40, 40, 1.0f );
+    int startX = 40 ;
+    int startY = 60 ;
 
-    sw[ "waiting" ] = new StringItem( "Press 'C' to Connect ...", 40, 60, 1.0f );
+    // Just display messages telling the player what to do
+    sw[ "Title" ] = new StringItem( "SPACE WARS", StringItem.Centering.Horizontal, startY += 20, 0 );
+
+    sw[ "waiting" ] = new StringItem( "Press 'C' to Connect ...", startX, startY += 220, 0, Color.Gray );
 
     // if he pushes space, Controller will start the game.
-    sw[ "PushKey" ] = new StringItem( "... or press spacebar to play locally", 40, 80, 1.0f );
+    sw[ "PushKey" ] = new StringItem( "Spacebar to play locally", startX, startY += 20, 0, Color.Gray );
+
+    //sw[ "test" ] = new StringItem( "'T' to test the quality of your network connection", startX, startY += 20, 1.0f, Color.Gray );
   }
 
   // Method that steps the game forwards one frame
   private void RunGame( GameTime gameTime )
   {
+    // Advance frame step number.
+    currentFrame++ ;
+    
+
     float stepTime = (float)gameTime.ElapsedGameTime.Ticks / TimeSpan.TicksPerSecond;
 
     // create alias variables for easy typing
@@ -372,7 +481,6 @@ public class SPW : Microsoft.Xna.Framework.Game
     }
     #endregion
 
-
     #region phasor collisions
     // Phasor is a bit hard because we have to determine the
     // CLOSEST body to intersect with.  E.g.
@@ -394,7 +502,6 @@ public class SPW : Microsoft.Xna.Framework.Game
 
     #endregion
 
-
     #region player-player collisions
     // check for player-player collisions
     // No collisions can happen if either one is in hyperspace
@@ -412,7 +519,6 @@ public class SPW : Microsoft.Xna.Framework.Game
       }
     }
     #endregion
-
 
     #region clean-up
 
@@ -503,7 +609,9 @@ public class SPW : Microsoft.Xna.Framework.Game
         shooter.phasor.Strike( closestSpriteSoFar );
     }
   }
+  #endregion
 
+  #region drrrrrrrrrrrrrrrraw
   // The MAIN draw routine.  Called once per game frame
   // by xna framework.
   // Draws the game, depending on whether
@@ -537,20 +645,68 @@ public class SPW : Microsoft.Xna.Framework.Game
 
   private void DrawTitle( GameTime gameTime )
   {
+    ////ShowDebug();
+
     if( world.player1.dead == true )
     {
-      sw[ "player1lose" ] = new StringItem( "Player 1 has died", 40, 180 );
+      // I just don't like these to show anymore
+      //sw[ "player1lose" ] = new StringItem( "Player 1 has died", 40, 180, 0 );
     }
 
     if( world.player2.dead == true )
     {
-      sw[ "player2lose" ] = new StringItem( "Player 2 has died", 40, 200 );
+      //sw[ "player2lose" ] = new StringItem( "Player 2 has died", 40, 200, 0 );
     }
+
+    // if it was a netgame, then also tell the player if he won or lost
+    // ### This is again YOUR PART:  Add code to record win or loss in database here.
+    #region tell if won or lost the netgame
+    if( netState == NetState.Connected )
+    {
+      string winMsg = "YOU WON YEAHAHEAH";
+      string loseMsg = "YOU LOST";
+      float displayTime = 3.0f;
+      if( Controller.myNetgamePlayerNumber == 1 )
+      {
+        // here, you are player 1
+        // messages for player 1
+        if( world.player1.dead )  // this person WAS player 1, and player 1 is dead, so he lost
+        {
+          sw[ "yourMessage" ] = new StringItem( loseMsg, Color.Red, displayTime );
+          logger.Log( "You LOST, as player 1 at " + currentFrame + ".  The game has ended.", LogMessageType.Info, OutputDevice.File );
+        }
+        else  // player 2 died, so this guy won
+        {
+          sw[ "yourMessage" ] = new StringItem( winMsg, Color.Teal, displayTime );
+          logger.Log( "You WON, as player 1 at " + currentFrame + ".  The game has ended.", LogMessageType.Info, OutputDevice.File );
+        }
+      }
+      else
+      {
+        // here, you are player 2
+        // messages for player 2
+        if( world.player1.dead ) // player 2 has killed player 1
+        {
+          sw[ "yourMessage" ] = new StringItem( winMsg, Color.Teal, displayTime );
+          logger.Log( "You WON, as player 2 at " + currentFrame + ".  The game has ended.", LogMessageType.Info, OutputDevice.File );
+        }
+        else  // player 2 has died
+        {
+          sw[ "yourMessage" ] = new StringItem( loseMsg, Color.Red, displayTime );
+          logger.Log( "You LOST, as player 2 at " + currentFrame + ".  The game has ended.", LogMessageType.Info, OutputDevice.File );
+        }
+      }
+    }
+    #endregion
   }
 
   // Draws the game
   private void DrawGame( GameTime gameTime )
   {
+    if( showDebug )
+      ShowDebug();
+
+
     spriteBatch.Begin();
 
     foreach( Sprite star in world.stars )
@@ -578,7 +734,6 @@ public class SPW : Microsoft.Xna.Framework.Game
       player1.DrawParticles( spriteBatch );
     else if( player1.state == ShipState.BlowingUp )
       player1.DrawDeath( spriteBatch );
-
 
     if( player2.state == ShipState.Normal )
       spriteBatch.Draw( player2.tex, player2.position, null, Color.White, (float)player2.rot, player2.center, 1.0f, SpriteEffects.None, 0.0f );
@@ -611,24 +766,116 @@ public class SPW : Microsoft.Xna.Framework.Game
 
     FlatShapes.End();
   }
+  #endregion
 
-
-  // Resets the game
-  public void ResetLocalGame()
+  #region debug and log
+  /// <summary>
+  /// Prints strings like
+  /// [20:44:40] [1] [Info] P1Ship Normal shld=40 enrg=120 rot=3.14 pos=( 480.00, 276.00 ) vel=( 0.00, 0.00 )
+  /// to the game's log file.
+  /// </summary>
+  private void LogGameState()
   {
-    world.CreateContent();
-
-    gameState = GameState.LocalGame;
+    logger.Log( "P1" + world.player1.ToString(), LogMessageType.Info, OutputDevice.File );
+    logger.Log( "P2" + world.player2.ToString(), LogMessageType.Info, OutputDevice.File );
   }
 
+  /// <summary>
+  /// Shows a bunch of strings using the ScreenWriter that contains
+  /// just lots of debug info
+  /// </summary>
+  private void ShowDebug()
+  {
+    // Always draw the frame counter
+    int startRightX = SPW.world.ScreenWidth - 200;
+    int y = 10;
+    sw[ "frameNumber" ] = new StringItem( currentFrame.ToString(), startRightX, y += 20, 1.0f, Color.White );
+    sw[ "gameState" ] = new StringItem( "gameState: " + gameState, startRightX, y += 20, 1.0f, Color.Gray );
+    sw[ "netState" ] = new StringItem( "netState: " + netState, startRightX, y += 20, 1.0f, Color.Gray );
+    sw[ "delaystring" ] = new StringItem( "avg delay: " + Controller.delayMetrics.averageMessageDelay, startRightX, y += 20, 1.0f, Color.Gray );
 
+    sw[ "delaystring1" ] = new StringItem( "last transit: " + Controller.delayMetrics.LastMessageTransportTime, startRightX, y += 20, 1.0f, Color.Gray );
+    // sw[ "delaystring2" ] = new StringItem( "sum delay: " + Controller.delayMetrics.TotalFrameDelay, startRightX, y += 20, 1.0f, Color.Gray );
+    // sw[ "delaystring3" ] = new StringItem( "total msgs: " + Controller.delayMetrics.TotalMessagesReceived, startRightX, y += 20, 1.0f, Color.Gray );
+    sw[ "delaystring4" ] = new StringItem( "frames diff: " + Controller.framesAhead, startRightX, y += 20, 1.0f, Color.Gray );
+    sw[ "delaystring5" ] = new StringItem( "(+ means ahead)", startRightX, y += 20, 1.0f, Color.Gray );
+
+    /*
+    if( c.netConn.listenerThread != null )
+    {
+      sw[ "delaystring5.5" ] = new StringItem( "listen thread " + ( c.netConn.listenerThread.IsAlive ? "alive" : "dead" ), startRightX, y += 20, 1.0f, Color.Gray );
+      sw[ "delaystring5.6" ] = new StringItem( "thread id " + c.netConn.listenerThread.ManagedThreadId, startRightX, y += 20, 1.0f, Color.Gray );
+    }
+    */
+
+    sw[ "delaystring6" ] = new StringItem( "last sync: " + Controller.frameOtherGuyWasOnAtLastSync, startRightX, y += 40, 1.0f, Color.Gray );
+
+  }
+
+  /// <summary>
+  /// Toggles debug output to be either on or off
+  /// </summary>
+  public void ToggleDebug()
+  {
+    if( showDebug )
+    {
+      // was on, so turn off
+      logger.Disable();
+      showDebug = false;
+    }
+    else
+    {
+      logger.Enable();
+      showDebug = true;
+    }
+  }
+  #endregion
+
+  #region reset and exit routines
+  /// <summary>
+  /// Resets the game.
+  /// </summary>
+  public void ResetGameInternals()
+  {
+    // reset player health, positions etc to 
+    // proper starting values
+    world.CreateContent();
+
+    // clear out incoming and processing queues
+    Controller.incoming.Clear();
+    Controller.processing.Clear();
+
+    // reset delay metrics measurement object
+    Controller.delayMetrics = new DelayMetrics();
+
+    c.netConn.ResetNetworkConnection();
+
+    // and we reset to frame 0
+    currentFrame = 0;
+
+    // and last frame you got as sync, also to 0
+    Controller.frameOtherGuyWasOnAtLastSync = 0;
+  }
+
+  /// <summary>
+  /// XNA automatically runs this when the application is exiting,
+  /// so we take the opportunity to shut down everything
+  /// </summary>
   protected override void OnExiting( object sender, EventArgs args )
   {
-    // make sure to kill the listener thread it if is active
+    // Shut down the controller.  This in turn will
+    // shut down the other thread.
     c.Shutdown();
+
+    // sleep a bit, to make sure that the network stuff
+    // shuts down, before shutting down the logger (because
+    // the network stuff logs its shut down info)
+    System.Threading.Thread.Sleep( 50 ) ;
+    logger.Shutdown();
 
     base.OnExiting( sender, args );
   }
+  #endregion
 
   #region other functions
   public string GameExecDir
@@ -644,14 +891,61 @@ public class SPW : Microsoft.Xna.Framework.Game
     System.Diagnostics.Process.Start( "explorer.exe", GameExecDir );
   }
 
-  #region ScreenShot providing code
+  /// <summary>
+  /// Opens the folder indicated by "SPW.path", if set.  If not
+  /// set, then just opens game exec dir
+  /// </summary>
+  public void OpenLogFileFolder()
+  {
+    if( path == string.Empty )
+      OpenContainingFolder();
+    else
+      System.Diagnostics.Process.Start( "explorer.exe", path );
+  }
+
+  public void OpenLogFile()
+  {
+    System.Diagnostics.Process.Start( "explorer.exe", SPW.logger.Filename );
+  }
+
+  #region ScreenShot providing code ** improved **
   public bool ScreenShot = false;
+  /// <summary>
+  /// This new way works very well unless you fullscreen.
+  /// Then it doesn't work so well.
+  /// </summary>
   private void checkScreenShot()
   {
     if( ScreenShot == true )
     {
+      string filename = path + DateTime.Now.ToString( "MMM_dd_yy__HH_mm_ss_ffffff" ) + ".png";
+
+      int w = GraphicsDevice.PresentationParameters.BackBufferWidth;
+      int h = GraphicsDevice.PresentationParameters.BackBufferHeight;
+
+      // Need to ADD A REFERENCE (right click "References.. Add Reference"
+      // to System.Drawing to use this screenshotting method.
+      System.Drawing.Bitmap screenShot = new System.Drawing.Bitmap( w, h );
+      System.Drawing.Graphics g = System.Drawing.Graphics.FromImage( screenShot );
+
+      g.CopyFromScreen( this.Window.ClientBounds.X, this.Window.ClientBounds.Y, 0, 0, new System.Drawing.Size( w, h ) );
+
+      screenShot.Save( filename, System.Drawing.Imaging.ImageFormat.Png );
+
+      ScreenShot = false;
+    }
+
+  }
+
+  /// <summary>
+  /// This old way doesn't work that well.  Use the new way.
+  /// </summary>
+  private void checkScreenShotOld()
+  {
+    if( ScreenShot == true )
+    {
       // stamp with time and dump to disk.
-      string filename = DateTime.Now.ToString( "MMM_dd_yy__HH_mm_ss_ffffff" ) + ".png";
+      string filename = SPW.path + DateTime.Now.ToString( "MMM_dd_yy__HH_mm_ss_ffffff" ) + ".png";
 
       sw[ "screenshot" ] = new StringItem( "Took screenshot:  " + filename + ".  Press '5'", 20, graphics.PreferredBackBufferHeight - 40 );
 
@@ -667,7 +961,6 @@ public class SPW : Microsoft.Xna.Framework.Game
 
       ScreenShot = false;
     }
-
   }
   #endregion
 
