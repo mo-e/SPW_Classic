@@ -15,8 +15,6 @@ ALL_SOCKETS = []  # every socket ever created.. used in shutdown.
 MAINSOCKET = None # the main socket
 
 MAINRUNNING = True
-
-TOTAL_RUNNING_GAMES = 0   # total number of games currently running
 #
 ### </globals>
 
@@ -34,7 +32,6 @@ def main():
   
   global MAINSOCKET
   global MAINRUNNING
-  global TOTAL_RUNNING_GAMES
   
   ####
   # Server Startup.
@@ -58,13 +55,17 @@ def main():
     sys.exit()  # bail if failed
 
 
-  # start up sentry thread which is cmd-line means to quit
-  thread.start_new_thread( QuitSentry, () )
 
 
   # redirect stdout to file for later review
   ##sys.stdout = open( "py-server-log.txt", "a" )
   Log( 'startup' )
+  print( "DO NOT RUN THIS PROGRAM BY PRESSING F5 FROM THE PYTHON.ORG IDE." )
+  print( "Instead, run it directly (double click it from Windows explorer)" )
+
+
+  # start up sentry thread which is cmd-line means to quit
+  thread.start_new_thread( QuitSentry, () )
 
   # now the main thread will enter this loop.. where
   # it continually attempts to accept PAIRS of players.
@@ -98,9 +99,7 @@ def main():
     ALL_SOCKETS.append( player1sock )
     ALL_SOCKETS.append( player2sock )
 
-    TOTAL_RUNNING_GAMES += 1
-
-    Log( "Starting new game.  Total games running: %d, total players connected: %d" % (TOTAL_RUNNING_GAMES, len(ALL_SOCKETS) ) )
+    Log( "Starting new game.  Total games running: %d, total players connected: %d" % (len( ALL_SOCKETS ) / 2, len( ALL_SOCKETS ) ) )
 
     thread.start_new_thread( RunGame, ( player1sock, player2sock ) )
   #</while>
@@ -114,11 +113,6 @@ def main():
 
 
 def RunGame( player1sock, player2sock ) :
-
-  # we assign to TOTAL_RUNNING_GAMES in this function,
-  # so we have to specify that when we assign to TOTAL_RUNNING_GAMES
-  # we DO NOT want a new local copy (local to this function) created
-  global TOTAL_RUNNING_GAMES
 
   print 'Running a game with player1sock=',player1sock,' player2sock=',player2sock
   
@@ -170,23 +164,13 @@ def RunGame( player1sock, player2sock ) :
   
   #</while running>
   
-  TOTAL_RUNNING_GAMES -= 1
-
-  print 'before closing player1sock=',player1sock,' player2sock=',player2sock
-  
   player1sock.close()
   player2sock.close()
 
-  print 'closed now player1sock=',player1sock,' player2sock=',player2sock
-
-  for sock in ALL_SOCKETS :
-    print sock
-  print '\n'
-  
   ALL_SOCKETS.remove( player1sock )
   ALL_SOCKETS.remove( player2sock )
 
-  Log( "Game ended.  Total games running: %d, total players connected: %d" % (TOTAL_RUNNING_GAMES, len(ALL_SOCKETS) ) )
+  Log( "Game ended.  Total games running: %d, total players connected: %d" % ( len(ALL_SOCKETS) / 2, len(ALL_SOCKETS) ) )
 
 #</def RunGame>
 
@@ -196,8 +180,7 @@ def QuitSentry():
   global MAINRUNNING
   
   # blocks until you type something
-  """
-  cmd = raw_input( "type anything to stop the server and disconnect all people" )
+  cmd = raw_input( "\nType anything and press <ENTER> to stop the server and disconnect all people" )
   print cmd
   
   # signal to all threads basically that we're shutting down
@@ -209,11 +192,30 @@ def QuitSentry():
     sock.close()
   
   print 'closing main=',MAINSOCKET,'\n'
-  print 'ok, now TRY and connect to the server to complete the shutdown'
   MAINSOCKET.close()
-  """
+  
+  print 'unsticking...'
+  Unstick()
+  
+  print 'done'
+  
 #</def sentry>
 
+""" Unblocks the MAINSOCKET (causes it to return from its .accept() blocking call).
+Used only when shutting down. """
+def Unstick():
+  
+  # unstick sticky socket
+  unsticker = socket( AF_INET, SOCK_STREAM )
+  
+  # connect to MAINSOCKET to basically unstick (unblock) it
+  unsticker.connect( ('127.0.0.1', 7070) )
+  
+  unsticker.close()
+  
+#</def Unstick>
+
+""" Logs information with timestamp """
 def Log( val ):
   print time.strftime( '%c' ),': ',val,'\n'
   sys.stdout.flush()

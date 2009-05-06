@@ -41,3 +41,8 @@ C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\obj\x86\Debug\ResolveAssemblyRefer
 C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\obj\x86\Debug\Microsoft.Xna.Framework.RuntimeProfile.txt
 C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\obj\x86\Debug\SPW.exe
 C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\obj\x86\Debug\SPW.pdb
+C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultFont.xnb
+C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultHeading.xnb
+C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\loggerFont.xnb
+C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Textures\Black.xnb
+C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Textures\DefaultStyle.xnb

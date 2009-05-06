@@ -67,9 +67,9 @@ public class StringItem
   public bool isActive;
 
 
-  public static float DEFAULT_LIFETIME = 4.0f ;
+  public static float DEFAULT_LIFETIME = 4.0f;
   public static Color DEFAULT_START_COLOR = Color.White;
-  public static Color DEFAULT_END_COLOR = Color.TransparentWhite ;
+  public static Color DEFAULT_END_COLOR = Color.TransparentWhite;
 
   public StringItem()
   {
@@ -114,12 +114,12 @@ public class StringItem
     life = lifeTime;
     initColor = startColor;
     finalColor = fadeToColor;
-    
+
     if( lifeTime == 0 )
-      fades = false ;
+      fades = false;
     else
-      fades = true ;
-    
+      fades = true;
+
     isActive = true;
   }
   #endregion
@@ -135,8 +135,7 @@ public class StringItem
     : this( msg, Centering.Both, 0, lifeTime, startColor, DEFAULT_END_COLOR ) { }
 
   public StringItem( string msg, Color startColor, Color endColor )
-    : this( msg, ScreenWriter.GetCenteredX( msg ), ScreenWriter.GetCenteredY( msg ),
-      DEFAULT_LIFETIME, startColor, endColor ) { }
+    : this( msg, Centering.Both, 0, DEFAULT_LIFETIME, startColor, endColor ) { }
 
   public StringItem( string msg, Centering how )
     : this( msg, how, 0, DEFAULT_LIFETIME, DEFAULT_START_COLOR, DEFAULT_END_COLOR ) { }
@@ -153,7 +152,7 @@ public class StringItem
   public StringItem( string msg, Centering how, int otherCoordValue, float lifeTime )
     : this( msg, how, otherCoordValue, lifeTime, DEFAULT_START_COLOR, DEFAULT_END_COLOR ) { }
 
-  public StringItem( string msg, Centering how, int otherCoordValue, float lifeTime, Color color ) 
+  public StringItem( string msg, Centering how, int otherCoordValue, float lifeTime, Color color )
     : this( msg, how, otherCoordValue, lifeTime, color, DEFAULT_END_COLOR ) { }
 
   /// <summary>
@@ -186,8 +185,8 @@ public class StringItem
     else
     {
       // center both, other coordinate value is ignored.
-      x = ScreenWriter.GetCenteredX( msg ) ;
-      y = ScreenWriter.GetCenteredY( msg ) ;
+      x = ScreenWriter.GetCenteredX( msg );
+      y = ScreenWriter.GetCenteredY( msg );
     }
 
     // now make the string item
@@ -239,6 +238,7 @@ public class ScreenWriter : DrawableGameComponent
   private SpriteBatch sb;
 
   public static SpriteFont font;
+  public static Game game;
 
   #region toggle enabledness
   /// <summary>
@@ -249,6 +249,10 @@ public class ScreenWriter : DrawableGameComponent
   /// it won't accumulate anymore.
   /// </summary>
   private bool enabled;
+  public bool IsEnabled
+  {
+    get { return enabled; }
+  }
   public void Disable()
   {
     enabled = false;
@@ -262,12 +266,14 @@ public class ScreenWriter : DrawableGameComponent
   public ScreenWriter( Game g )
     : base( g )
   {
-    this.enabled = true ;
+    this.enabled = true;
+
+    game = g;
 
     // initialize the "history" object (which is just
     // a collection of all the strings being displayed
     // on the screen at the present time)
-    
+
     history = new Dictionary<string, StringItem>();
   }
 
@@ -296,13 +302,13 @@ public class ScreenWriter : DrawableGameComponent
   public static int GetCenteredX( string msg )
   {
     Vector2 strDims = font.MeasureString( msg );
-    return (int)( ( SPW.world.ScreenWidth - strDims.X ) / 2 );
+    return (int)( ( game.GraphicsDevice.PresentationParameters.BackBufferWidth - strDims.X ) / 2 );
   }
 
   public static int GetCenteredY( string msg )
   {
     Vector2 strDims = font.MeasureString( msg );
-    return (int)( ( SPW.world.ScreenHeight - strDims.Y ) / 2 );
+    return (int)( ( game.GraphicsDevice.PresentationParameters.BackBufferHeight - strDims.Y ) / 2 );
   }
 
   /// <summary>
@@ -324,7 +330,7 @@ public class ScreenWriter : DrawableGameComponent
         if( history.ContainsKey( id ) )
           return history[ id ];
         else
-          return null ;
+          return null;
       }
 
     }
@@ -415,7 +421,7 @@ public class ScreenWriter : DrawableGameComponent
     {
       lock( this.history )
       {
-        sb.Begin( SpriteBlendMode.AlphaBlend );
+        sb.Begin( SpriteBlendMode.AlphaBlend, SpriteSortMode.Immediate, SaveStateMode.SaveState );
 
         foreach( StringItem si in history.Values )
         {

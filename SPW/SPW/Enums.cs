@@ -15,6 +15,16 @@ public enum GameState
   LocalGame,
   NetGame,
 
+  /// <summary>
+  /// The gameover state lasts for one frame exactly
+  /// and is the transitional state used to run all
+  /// cleanup and reset between games.
+  /// 
+  /// After game over, you have to re-connect to the server
+  /// to play again.
+  /// </summary>
+  GameOver,
+
   Testing
 }
 
@@ -36,7 +46,7 @@ public enum NetState
   /// Connected to network and another player is present as well
   /// </summary>
   Connected,
-  
+
   /// <summary>
   /// A state that says the OTHER GUY is lagging,
   /// and our game engine should NOT PROCESS ANYTHING
@@ -66,7 +76,14 @@ public enum ShipState
   BlowingUp
 }
 
-
+//sides of the screen
+public enum Side
+{
+  Left,
+  Top,
+  Right,
+  Bottom
+}
 
 
 

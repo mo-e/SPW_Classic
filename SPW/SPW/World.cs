@@ -39,6 +39,8 @@ public class World
   // Contains all the sound effects.
   public Dictionary<SFX, SoundEffect> sfx;
 
+  // Side walls of the world
+  public Dictionary<Side, Plane> walls;
 
   // Need a reference to the GraphicsDevice
   // of the SPW class.
@@ -54,6 +56,35 @@ public class World
 
     // and initialize this
     torpedos = new List<Projectile>();
+
+    #region create the side walls
+    // and the walls which are the edges of the world
+    walls = new Dictionary<Side, Plane>();
+
+    // The wall planes are perpendicular to the
+    // plane that the game takes place in.
+
+    //            TOP plane (goes INTO the screen here, along the x-axis)
+    // ------------------------------->
+    // |                              |
+    // |    C                         |
+    // |                              |
+    // |                              |< right plane, goes INTO the screen here, along y axis
+    // |                       D      |
+    // |                              |
+    // V------------------------------|
+
+    walls[ Side.Left ] = new Plane( -1, 0, 0, 0 );  // the left side plane has its
+    // normal in the direction (-1, 0, 0) and you must travel
+    // 0 units in the direction of the normal to GET TO the origin.
+
+    walls[ Side.Top ] = new Plane( 0, -1, 0, 0 );
+
+    walls[ Side.Right ] = new Plane( 1, 0, 0, -ScreenWidth );
+    // travel -ScreenWidth units along the normal to GET TO the origin.
+
+    walls[ Side.Bottom ] = new Plane( 0, 1, 0, -ScreenHeight );
+    #endregion
   }
 
 

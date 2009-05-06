@@ -497,6 +497,12 @@ public class Ship : MovingSprite
     }
   }
 
+  /// <summary>
+  /// Gives you the direction vector that
+  /// indicated what direction this ship is facing.
+  /// This vector is normalized.
+  /// </summary>
+  /// <returns>Normalized direction vector indicating Ship heading</returns>
   public Vector2 GetHeading()
   {
     Vector2 heading = new Vector2();
@@ -585,7 +591,8 @@ public class Ship : MovingSprite
 
       Vector2 heading = GetHeading();
       torpedo.position = this.position + 15.0f * heading /* start torpedo out some dist away from shooter in direction of his shot heading so
-                                                          * player doesn't basically shoot himself with his own torpedos immediately */ ;
+                                                          * player doesn't basically shoot himself with his own torpedos immediately */
+                                                                                                                                        ;
       torpedo.rot = this.rot;
       torpedo.velocity = this.velocity + ( heading * Projectile.NORMAL_START_SPEED );
 
@@ -746,10 +753,10 @@ public class Ship : MovingSprite
   public override string ToString()
   {
     return base.ToString() + " " + state +
-      " shld=" + shield + " enrg=" + energy + 
+      " shld=" + shield + " enrg=" + energy +
       String.Format( " rot={0:f2}", rot ) +
       " pos=" + vecString( position ) +
-      " vel=" + vecString( velocity ) ;
+      " vel=" + vecString( velocity );
   }
 }
 
@@ -788,7 +795,7 @@ public class Phasor
   public float reach;
 
   //the maximum reach in world units a phasor can go
-  private static float MAX_REACH = 120.0f;
+  public static float MAX_REACH = 120.0f;
 
   // cooldown time between distinct firings
   // of the phasor gun
@@ -855,7 +862,180 @@ public class Phasor
     return this.shooter.position + this.shooter.GetHeading() * this.reach;
   }
 
+  #region dupe ray
+  /// <summary>
+  /// Find if ray pokes thru side planes (edges of screen) or not.
+  /// 
+  /// If it does, it gives you back a duplicated, translated version
+  /// of the ray that represents the wrapped ray.. like for example, it
+  /// wraps from the left side of the screen, to the right.
+  /// </summary>
+  public Ray? GetDupeRay()
+  {
+    // Example of where there is no wrap
+    // +-----------------------+
+    // |                 ^     |
+    // |                /      |
+    // |               /       |
+    // |              C        |
+    // +-----------------------+
 
+    // Example when you need wrap.
+    //                     (breaks top)
+    //                     
+    //                     ^
+    // +------------------/----+
+    // |                 /     |
+    // |                C      |
+    // |                       |
+    // |                   ^   |
+    // +------------------/----+
+    //                   /
+    //                  C
+
+    // So in the event that the phasor "breaks" the top
+    // we need to wrap the phasor down through the bottom of the
+    // world.
+    // 
+    // To give the effect of "wrapped" phasor, we duplicate
+    // the ray source and fire a SECOND ray (the "dupe ray")
+    // BELOW the game world as shown in the diagram above.
+
+    Vector2 shipHeading = shooter.GetHeading();
+
+    Ray thisRay = new Ray(
+
+      // starts at the center of
+      // wherever the owning ship currently is.
+      new Vector3( shooter.position.X, shooter.position.Y, 0.0f ),
+
+      // it goes in the direction the ship is currently facing
+      new Vector3( shipHeading.X, shipHeading.Y, 0.0f )
+
+    );
+
+    // See what side the ray would penetrate (choose only closest one,
+    // because if it penetrated more than one wall, then it would be
+    // like this:
+
+    // ___________ *___ (2nd, further away penetration is outside game)
+    // |         |/
+    // |         *
+    // |        /|
+    // |       C |
+    // |_________|
+
+
+    // FIRST STAGE:  Find WHERE ALONG THE RAY would
+    // the phasor ray intersect each wall, assuming
+    // that the phasor ray is INFINITE at first.
+
+    // In the example below, the for loop below __WILL__
+    // detect that the phasor DOES INTERSECT
+    // the top wall.  Because the XNA Ray/Plane
+    // intersection algorithm (.Intersects()) ALWAYS thinks that
+    // the ray is infinite in length
+
+    // +-----------------------+
+    // |                       |
+    // |                ^      |
+    // |               /       |
+    // |              C        |
+    // +-----------------------+
+
+    // The FLOAT? value you get back
+    // will tell you if the phasor ACTUALLY hits the
+    // wall or not.
+
+    Side? closestSide = null;
+    float? closestDist = float.MaxValue;
+    foreach( KeyValuePair<Side, Plane> sideAndPlane in SPW.world.walls )
+    {
+      float? intn = thisRay.Intersects( sideAndPlane.Value );
+      if( intn < closestDist )
+      {
+        // won't get here if intn is null
+        closestDist = intn;
+        closestSide = sideAndPlane.Key;
+      }
+    }
+
+
+    if( closestSide == null )
+    {
+      // This case doesn't ever happen because the player phasor
+      // must at least intersect ONE of the 4 walls at the FIRST STAGE
+      // (the FIRST STAGE assumes the phasor is infinite in length).
+      SPW.logger.Log( "The closest side was null.. this should not happen", LogMessageType.Error, OutputDevice.ScreenAndFile );
+      return null;
+    }
+    else
+    {
+      // Check if the phasor actually HITS a wall.
+      if( closestDist > this.reach )
+      {
+        // wall is out of reach
+        //        |
+        //        |
+        // --->   |
+        //        |
+        //        |
+        return null;
+      }
+      else
+      {
+        // now, give back the Ray object
+        // that represents the duplicated, translated ray
+
+
+        Ray translatedRay = new Ray();
+
+        // now, depending on which side was hit,
+        // we're going to duplicate the ray somewhere else
+        switch( closestSide.Value )
+        {
+          case Side.Left:
+            translatedRay.Position = new Vector3( shooter.position.X + SPW.world.ScreenWidth, shooter.position.Y, 0 );
+            break;
+          case Side.Top:
+            // if it breaks the top, go DOWN (+y)
+            //                     ^
+            // +------------------/----+
+            // |                 /     |
+            // |                C      | ^
+            // |                       | |
+            // |                   ^   | | -> Copy ray down measures ScreenHeight units.
+            // +------------------/----+ |
+            //                   /       |
+            //                  C        v
+            translatedRay.Position = new Vector3( shooter.position.X, shooter.position.Y + SPW.world.ScreenHeight, 0 );
+            break;
+          case Side.Right:
+            // "mirror over" at right
+            //                      
+            //   +-----------------------+
+            //   |                       |
+            // C--->                   C--
+            //   |                       |
+            //   |                       |
+            //   +-----------------------+
+            //
+            translatedRay.Position = new Vector3( shooter.position.X - SPW.world.ScreenWidth, shooter.position.Y, 0 );
+            break;
+          case Side.Bottom:
+            translatedRay.Position = new Vector3( shooter.position.X, shooter.position.Y - SPW.world.ScreenHeight, 0 );
+            break;
+        }
+
+        // ray has same dir as ship that shoots the ray
+        translatedRay.Direction = new Vector3( shipHeading.X, shipHeading.Y, 0 );
+
+        // and return it.
+        return translatedRay;
+      }
+    }
+  }
+  #endregion
 
   /// <summary>
   /// Tells you how far along the line of this phasor
@@ -865,15 +1045,8 @@ public class Phasor
   /// </summary>
   /// <param name="other">The sprite to check if it hits</param>
   /// <returns>Distance along line if hits, NULL if does not</returns>
-  public float? GetStrikeDistanceTo( Sprite other )
+  public float? GetStrikeDistanceToFirstLevel( Sprite other )
   {
-    // phasors can't hit their owner.
-    if( other == this.shooter as Sprite )
-    {
-      // null meaning no intersection
-      return null;
-    }
-
     Vector2 shipHeading = shooter.GetHeading();
 
     // create the ray
@@ -886,13 +1059,55 @@ public class Phasor
       // it goes in the direction the ship is currently facing
       new Vector3( shipHeading.X, shipHeading.Y, 0.0f ) );
 
-
-
     // treat the other thing as a sphere
     BoundingSphere thatSphere = new BoundingSphere(
       new Vector3( other.position.X, other.position.Y, 0.0f ), other.GetApproxRadius() );
 
+    return FindStrikeDistanceToSphere( thisRay, thatSphere );
+  }
 
+  /// <summary>
+  /// Tells you how far along the line of the WRAPPED COPY of this phasor
+  /// it would be to strike the <paramref name="other"/> Sprite.
+  /// 
+  ///                     ^
+  /// +------------------/----+
+  /// |                 /     |
+  /// |                C      |
+  /// |                       |
+  /// |                   ^   |
+  /// +------------------/----+
+  ///                   /
+  ///                  C  (wrapped copy)
+  /// 
+  /// Gives you NULL if it simply wouldn't hit the other Sprite.
+  /// </summary>
+  /// <param name="other"></param>
+  /// <returns></returns>
+  private float? GetStrikeDistanceToSecondLevel( Sprite other )
+  {
+    // get the duplicated wrapped ray
+    Ray? dupeRay = GetDupeRay();
+
+    // if the dupe ray exists (the phasor should wrap)
+    // then proceed with the calculation
+    if( dupeRay != null )
+    {
+      // treat the other thing as a sphere
+      BoundingSphere thatSphere = new BoundingSphere(
+        new Vector3( other.position.X, other.position.Y, 0.0f ), other.GetApproxRadius() );
+
+      return FindStrikeDistanceToSphere( dupeRay.Value, thatSphere );
+    }
+    else // there is no duperay (the original phasor did not intersect any of the walls)
+      return null; // so return null
+  }
+
+
+
+  #region intersection methods
+  private float? FindStrikeDistanceToSphere( Ray thisRay, BoundingSphere thatSphere )
+  {
     // Determine if this ray intersects the other
     // sprite's bounding sphere.
     float? howFarOut = null;
@@ -936,7 +1151,7 @@ public class Phasor
       // CONSIDERING THAT FLOAT VALUE:
       // don't let the hit occur if howFarOut is
       // greater than the reach of this phasor.
-      if( howFarOut > reach )
+      if( howFarOut > this.reach )
       {
         // it WOULD have hit, but its out of range.
         /*
@@ -961,6 +1176,25 @@ public class Phasor
       }
     }
   }
+
+  public float? GetStrikeDistanceTo( Sprite other )
+  {
+    // phasors can't hit their owner.
+    if( other == this.shooter as Sprite )
+    {
+      // null meaning no intersection
+      return null;
+    }
+
+    float? strikeDist = GetStrikeDistanceToFirstLevel( other );
+    if( strikeDist == null )
+    {
+      strikeDist = GetStrikeDistanceToSecondLevel( other );
+    }
+
+    return strikeDist;
+  }
+  #endregion
 
 
 
@@ -993,3 +1227,5 @@ public class Phasor
 
   }
 }
+
+

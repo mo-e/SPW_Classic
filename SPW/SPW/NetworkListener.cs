@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
-using System.Threading ;
+using System.Threading;
 using System.Runtime.InteropServices;
 
 using Microsoft.Xna.Framework;
@@ -21,14 +21,14 @@ using Microsoft.Xna.Framework.Storage;
 
 public class NetworkListener
 {
-  public static Socket socket ;
-  public Thread listenerThread ;
-  
+  public static Socket socket;
+  public Thread listenerThread;
+
   public static int MAX_PACKET_SIZE = 1008; // = 12*84. Want multiple of 12, since sizeof(Message) struct = 12 bytes
 
   // IP Address and port where server script can be reached.
-  public static string SERVER_IP = "127.0.0.1" ;
-  public static int SERVER_PORT  = 7070 ;
+  public static string SERVER_IP = "127.0.0.1";
+  public static int SERVER_PORT = 7070;
 
   /// <summary>
   /// The first place where messages that come in through the network get saved to.
@@ -58,7 +58,7 @@ public class NetworkListener
   /// </summary>
   public void listen()
   {
-    netLogger.Info( "Listener thread startup" ) ;
+    netLogger.Info( "Listener thread startup" );
 
     byte[] buf = new byte[ MAX_PACKET_SIZE ];
 
@@ -71,19 +71,19 @@ public class NetworkListener
     // in here forever!
     while( true )
     {
-      int bytesRead = 0 ;
+      int bytesRead = 0;
       try
       {
-        bytesRead = socket.Receive( buf ) ;
+        bytesRead = socket.Receive( buf );
       }
-      catch( Exception exc ) 
+      catch( Exception exc )
       {
         // If the socket throws an exception, it could
         // be because we've lost our connection.  At any
         // rate, it means something has gone horrribly wrong,
         // so we need to drop the network connection
         netLogger.Error( "Exception thrown in receive: " + exc.Message );
-        
+
         // also log to the screen so we can see it
         SPW.logger.Log( "Couldn't receive on socket", LogMessageType.Warning, OutputDevice.ScreenAndFile );
         SPW.logger.Log( "Exception text: " + exc.Message, LogMessageType.Warning, OutputDevice.ScreenAndFile );
@@ -94,7 +94,7 @@ public class NetworkListener
         SPW.logger.Log( "Aborting listener thread...", LogMessageType.Warning, OutputDevice.ScreenAndFile );
 
         // Set to disconnected
-        SPW.netState = NetState.Disconnected ;
+        SPW.netState = NetState.Disconnected;
 
         // This listener thread must die
         Thread.CurrentThread.Abort();
@@ -131,16 +131,16 @@ public class NetworkListener
       // So we construct and process as many Message structs
       // as we know got sent.
 
-      int expectedSize = Message.Size ;
+      int expectedSize = Message.Size;
       // now loop through, every Message.Size bytes is
       // another Message struct
-      
+
       if( bytesRead != expectedSize )
       {
         // Just log a note so we can see how often this happens
         netLogger.Info( "TCP:  mashed more than 1 message together.  I read " + bytesRead + " but expected " + expectedSize );
       }
-      
+
       if( bytesRead % Message.Size != 0 )
       {
         // Now, I should mention that It IS __POSSIBLE__ for TCP
@@ -149,7 +149,7 @@ public class NetworkListener
         // since each Message struct is 12 bytes in size,
         // this would mean we'd have 1000/12 = 83.3333 messages.. basically
         // a Message struct would have been cut in half almost.
-        
+
         // So we'd basically need to piece together that last
         // message struct with the beginning part (in this case,
         // the first 8 bytes of the next packet we receive would
@@ -169,7 +169,7 @@ public class NetworkListener
         // We don't have code in place to handle this, so we'll
         // just log an error as a reminder.
         SPW.logger.Error( "Read " + bytesRead + " bytes, which isn't a multiple of " + Message.Size +
-                          ", so a Message was cut in two.  " + 
+                          ", so a Message was cut in two.  " +
                           "When are you going to code this section?  Now is a good time :)." );
       }
 
@@ -177,11 +177,11 @@ public class NetworkListener
       {
         // get a hunk of 'expectedSize' bytes from the
         // collection of received bytes
-        byte[] messageBytes = new byte[ expectedSize ] ;
-        Buffer.BlockCopy( buf, i, messageBytes, 0, expectedSize ) ;
+        byte[] messageBytes = new byte[ expectedSize ];
+        Buffer.BlockCopy( buf, i, messageBytes, 0, expectedSize );
 
         // Create a Message struct from those bytes
-        Message receivedMessage = Message.FromBytes( messageBytes ) ;
+        Message receivedMessage = Message.FromBytes( messageBytes );
         if( receivedMessage.playerNumber == Controller.myNetgamePlayerNumber )
         {
           //!! Using own messages for measuring network performance ONLY.
@@ -207,7 +207,7 @@ public class NetworkListener
           #endregion
 
           int messageTravelTimeInFRAMES = SPW.currentFrame - receivedMessage.frame;
-          Controller.delayMetrics.LastMessageTransportTime = messageTravelTimeInFRAMES ;
+          Controller.delayMetrics.LastMessageTransportTime = messageTravelTimeInFRAMES;
 
           // Now we don't have to do anything else with this message,
           // because its really useless.  We already have the information
@@ -218,13 +218,13 @@ public class NetworkListener
         else
         {
           netLogger.Info( "Got a message " + receivedMessage.ToString() );
-          initialMessageContainer.Add( receivedMessage ) ;
+          initialMessageContainer.Add( receivedMessage );
         }
       }
 
 
       #region copy messages from initialMessageContainer queue to Controller.incoming
-      int messagesAdded = 0 ;
+      int messagesAdded = 0;
 
       // Because Controller.incoming is _shared_, we must acquire a
       // LOCK on it to prevent the other thread (the MAIN THREAD)
@@ -245,10 +245,10 @@ public class NetworkListener
           // Now add to the collection
           // of Message structs that the MAIN THREAD
           // will eventually process
-          for( int i = 0; i < initialMessageContainer.Count ; i++ )
+          for( int i = 0; i < initialMessageContainer.Count; i++ )
           {
-            Controller.incoming.Add( initialMessageContainer[i] );
-            messagesAdded++ ;
+            Controller.incoming.Add( initialMessageContainer[ i ] );
+            messagesAdded++;
           }
         }
 
@@ -276,14 +276,14 @@ public class NetworkListener
     // Create the socket.
     try
     {
-      socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP ) ;
+      socket = new Socket( AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP );
 
       socket.Connect( SERVER_IP, SERVER_PORT );
 
       SPW.logger.Log( "Connected? " + socket.Connected, LogMessageType.Info, OutputDevice.File );
 
       // create the listener thread
-      listenerThread = new Thread(listen);
+      listenerThread = new Thread( listen );
 
       // start it!
       listenerThread.Start();
@@ -298,17 +298,17 @@ public class NetworkListener
       socket = null;
 
       // return false, indicating failure to connect to server
-      return false ;
+      return false;
     }
 
     // If get down here, then it means the try block executed
     // "without a hitch", and so the catch() block was skipped
     // entirely, so we can return true here.
-    return true ;
+    return true;
   }
-  
-  
-  
+
+
+
   /// <summary>
   /// THE MESSAGE SEND METHOD.  Sends a message across the network to the server
   /// which will eventually be received by the other connected player.
@@ -324,7 +324,7 @@ public class NetworkListener
 
       lock( Controller.incoming )
       {
-        Controller.incoming.Add( message ) ;
+        Controller.incoming.Add( message );
       }
 
       // Because we're doing this here, in the Receive
@@ -350,7 +350,7 @@ public class NetworkListener
       /////////socket.Send( messageBytes ) ;  //!! Using socket.SendAsync() method instead, below
       // socket.Send() works ok, but can make the game
       // feel a bit "chunky" when tcp misbehaves a bit.
-      
+
       ////
       // Here's another way that performs better
       // when the network is a bit laggy:  we'll
@@ -366,8 +366,8 @@ public class NetworkListener
     }
     catch( Exception exc )
     {
-      SPW.logger.Log( "Error sending the message " + message.ToString(), LogMessageType.Error, OutputDevice.ScreenAndFile ) ;
-      SPW.logger.Log( "Exception text: " + exc.Message, LogMessageType.Error, OutputDevice.File ) ;
+      SPW.logger.Log( "Error sending the message " + message.ToString(), LogMessageType.Error, OutputDevice.ScreenAndFile );
+      SPW.logger.Log( "Exception text: " + exc.Message, LogMessageType.Error, OutputDevice.File );
     }
   }
 
@@ -418,7 +418,7 @@ public class NetworkListener
   /// </summary>
   public void Shutdown()
   {
-    SPW.logger.Log( "Shutting down the socket...", LogMessageType.Info, OutputDevice.File ) ;
+    SPW.logger.Log( "Shutting down the socket...", LogMessageType.Info, OutputDevice.File );
 
     ResetNetworkConnection();
 
@@ -461,7 +461,7 @@ public class NetworkListener
   /// <summary>
   /// Measures average network delay for the network test
   /// </summary>
-  private static DelayMetrics networkTest_DelayMetrics ;
+  private static DelayMetrics networkTest_DelayMetrics;
 
   /// <summary>
   /// The largest size message in bytes sent so far.
@@ -473,7 +473,7 @@ public class NetworkListener
   /// one of the biggest problems you have, it
   /// may be time to switch to UDP.
   /// </summary>
-  private static int networkTest_largestMessage ;
+  private static int networkTest_largestMessage;
 
   /// <summary>
   /// Starts up the network test by firing up
@@ -500,14 +500,14 @@ public class NetworkListener
       SPW.logger.Log( "Couldn't connect to server!", LogMessageType.Error, OutputDevice.ScreenAndFile );
       SPW.logger.Log( "Exception text: " + exc.Message, LogMessageType.Error, OutputDevice.ScreenAndFile );
       SPW.sw[ "connectFail" ] = new StringItem( "Connection failed.  Is the server up?", Color.Red );
-      SPW.gameState = GameState.TitleScreen ;
+      SPW.gameState = GameState.TitleScreen;
       return;
     }
     listenerThread = new Thread( TestNetworkListen );
     listenerThread.Start();
 
     SPW.logger.Log( "-- BEGIN TEST --", LogMessageType.Info, OutputDevice.File );
-    
+
     SPW.gameState = GameState.Testing;
     SPW.netState = NetState.Waiting;
 
@@ -542,7 +542,7 @@ public class NetworkListener
         bytesRead = socket.Receive( buf );
 
         // the test has started.
-        SPW.netState = NetState.Connected ;
+        SPW.netState = NetState.Connected;
         SPW.sw[ "teststart" ] = new StringItem();
       }
       catch( Exception exc )
@@ -643,7 +643,7 @@ public class NetworkListener
     // to receive".  The block can be very short (~10ms) but
     // its enough to give the game a "chunking" feel when the
     // network connection isn't ideal.
-    
+
 
     // 60% chance to actually send, to kind of
     // make the test more realistic (sending 100% of
@@ -651,7 +651,7 @@ public class NetworkListener
     // the game operates)
     if( SPW.rand.NextDouble() < 0.6 )
     {
-      SocketAsyncEventArgs saea =  new SocketAsyncEventArgs( );
+      SocketAsyncEventArgs saea = new SocketAsyncEventArgs();
       saea.SetBuffer( TestMsg.GetBytes(), 0, Message.Size );
       socket.SendAsync( saea );
     }

@@ -40,20 +40,20 @@ public class Controller : GameComponent
 
   // ### You can add more variables to do with
   // the database connection here
-  
+
   /// <summary>
   /// Tells if logged in or not.
   /// </summary>
-  public bool loggedIn ;
+  public bool loggedIn;
 
   #region code that runs after the user clicks 'ok' or 'cancel' on the "connect" dialog box
   private void RunAfterClickOK()
   {
     // ### Your part.  Database query to permit login.
-    bool loginSuccessful ;
-    
+    bool loginSuccessful;
+
     // if( user exists in database ) {
-        loginSuccessful = true; //!! You actually have to
+    loginSuccessful = true; //!! You actually have to
     // }
     // make a database query here, before setting
     // this loginSuccessful variable to TRUE.
@@ -116,7 +116,7 @@ public class Controller : GameComponent
     SPW.logger.Log( "The user has clicked CANCEL.  You could do anything else here, but you don't really have to.", LogMessageType.Info, OutputDevice.File );
   }
   #endregion
-  
+
   #endregion // database stuff
 
   #region networked game variables
@@ -145,7 +145,7 @@ public class Controller : GameComponent
   /// lower when the connection is good, set it higher when the
   /// connection is getting laggy)
   /// </summary>
-  public static int NETWORK_DELAY = 10 ; // use a higher number like 24 for more laggy server
+  public static int NETWORK_DELAY = 10; // use a higher number like 24 for more laggy server
 
   /// <summary>
   /// SHARED with listenerThread in NetworkListener.cs.
@@ -200,7 +200,7 @@ public class Controller : GameComponent
   /// negative, then you are BEHIND.  Updates every FRAME,
   /// based on last SYNC message received.  Displayed in debug output.
   /// </summary>
-  public static int framesAhead ;
+  public static int framesAhead;
 
   /// <summary>
   /// The frame the other guy was on at
@@ -217,14 +217,15 @@ public class Controller : GameComponent
   /// be allowed to run ahead enough frames to
   /// allow an "expired message" to be passed __at all__.
   /// </summary>
-  public static int frameOtherGuyWasOnAtLastSync ;
+  public static int frameOtherGuyWasOnAtLastSync;
   #endregion
 
   #region Controller constructor and Update/Check method
   /// <summary>
   /// Constructor
   /// </summary>
-  public Controller( Game g ) : base( g )  // call base class ctor
+  public Controller( Game g )
+    : base( g )  // call base class ctor
   {
     // save reference to the main game itself
     game = this.Game as SPW;
@@ -304,13 +305,13 @@ public class Controller : GameComponent
     {
       game.ToggleDebug();
 
-      SPW.sw["debugmsg"] = new StringItem( "Debug messages " + (SPW.showDebug?"on":"off"), StringItem.Centering.Horizontal, 250, StringItem.DEFAULT_LIFETIME, Color.Gray ) ;
+      SPW.sw[ "debugmsg" ] = new StringItem( "Debug messages " + ( SPW.showDebug ? "on" : "off" ), StringItem.Centering.Horizontal, 250, StringItem.DEFAULT_LIFETIME, Color.Gray );
     }
 
     if( this.JustPressed( Keys.D9 ) )
       game.ScreenShot = true; // take a screenshot next frame.
 
-    if( this.JustPressed( Keys.OemMinus ) )
+    if( this.IsPressed( Keys.OemMinus ) )
       SPW.logger.DeleteOldestMessage();
 
     if( this.JustPressed( Keys.Enter ) )
@@ -359,8 +360,8 @@ public class Controller : GameComponent
   private void RunNetGameControls()
   {
     // Start x and y positions for messages
-    int msgX = 40 ;
-    int msgY = 200 ;
+    int msgX = 40;
+    int msgY = 200;
 
     switch( SPW.netState )
     {
@@ -375,7 +376,7 @@ public class Controller : GameComponent
 
         // A message will come in when the game is to start,
         // so we need to be checking for messages here.
-        
+
         // 1.  Check for new messages from server
         CHECK_MESSAGES();
 
@@ -402,9 +403,9 @@ public class Controller : GameComponent
           // Change state to disconnected state, actual
           // kicking of user to titlescreen occurs
           // NEXT iteration of loop,
-          
+
           // (see the NetState.Disconnected case in this switch)
-          SPW.netState = NetState.Disconnected ;
+          SPW.netState = NetState.Disconnected;
         }
         #endregion
         break;
@@ -421,14 +422,14 @@ public class Controller : GameComponent
         // CHANGE GAMESTATE from GameState.NetGame to
         // GameState.TitleScreen immediately.
         SPW.gameState = GameState.TitleScreen;
-  
+
         // Once we change the gameState from
         // GameState.NetGame to GameState.TitleScreen,
         // this function ( RunNetGameControls() ) won't run anymore.
 
         // So the "You were disconnected" line of code
         // only happens once.
-        
+
         // When there is an attempt to connect again
         // netState gets immediately set to NetState.Waiting,
         // not NetState.Disconnected
@@ -440,7 +441,7 @@ public class Controller : GameComponent
         #region NetState.Connected
         // Run the net game.
         // Running the net game has 3 steps for the controller.
-        
+
         // 1. check for new messages and process them
         CHECK_MESSAGES();
 
@@ -455,7 +456,7 @@ public class Controller : GameComponent
         #endregion
         break;
 
-      
+
       case NetState.TooFarAhead:
 
         #region NetState.TooFarAhead
@@ -472,7 +473,7 @@ public class Controller : GameComponent
         // Only check for messages.  We need to check
         // for a new SYNC message, which will basically
         // tell us the other guy is back online.
-        CHECK_MESSAGES() ;
+        CHECK_MESSAGES();
 
         // Give the player the option to quit.
         if( JustPressed( Keys.Back ) )
@@ -576,7 +577,7 @@ public class Controller : GameComponent
         {
           // only count my own messages, because the other player may be ahead in frames,
           // which screws up the metric with negative numbers
-          delayMetrics.LastMessageTransportTime = SPW.currentFrame - incoming[ i ].frame ;
+          delayMetrics.LastMessageTransportTime = SPW.currentFrame - incoming[ i ].frame;
         }
       }
 
@@ -611,11 +612,11 @@ public class Controller : GameComponent
     // __Player 2's machine__:
     // Frame 1211:  Player 2 HYPERSPACE  [ done first ]
     // Frame 1211:  Player 1 HYPERSPACE  [ done second ]
-    
+
     // SO, why is this a big problem that causes desync?
-    
+
     // It goes back to the pseudorandom number generator.
-    
+
     // Say we "seed" the random number generator with '5'.
     // Then, on BOTH machines, the first 10 random digits
     // pulled out will be:
@@ -625,7 +626,7 @@ public class Controller : GameComponent
     // 0.5, 0.71, -0.3, 0.11, 0.2, 0.67, -0.4, 0.099, 0, 0.1
 
     // Just remember the first 4 numbers there for a minute.
-    
+
     // Now because Hyperspace pulls numbers from the random number
     // generator (which we took care to SEED with the same number, I
     // think I used 5 at the beginning of the netgame), we are
@@ -643,7 +644,7 @@ public class Controller : GameComponent
     // Frame 1211:  Player **2** HYPERSPACE  [ gets random velocity vector ( 0.5, 0.71 ) ]
     // Frame 1211:  Player 1 HYPERSPACE  [ gets random velocity vector ( -0.3, 0.11 ) ]
 
-    
+
     // The random numbers that come out of the random number generator
     // will be the SAME, yes, but because on player 1's machine, player 1
     // is getting the ( 0.5, 0.71 ) values for his hyperspace velocity vector
@@ -676,14 +677,14 @@ public class Controller : GameComponent
     spewList();  // see the list in debug output.  this makes the file huge, but
     // wanna see it anyway.  whenever a desync bug occurs, immediately
     // quit and you can view the "train" of messages to see what it might have been.
-    
+
 
     // Now, we need to go through the processing queue and
     // execute ALL the message structs that are "ready" to
     // be executed
     for( int i = 0; i < processing.Count; i++ )
     {
-      Message currentMessage = processing[i] ;
+      Message currentMessage = processing[ i ];
 
       // check if it is "TIME" to process this message or not.
 
@@ -791,7 +792,7 @@ public class Controller : GameComponent
       // that was created frame 50 AT frame 50, so we have to
       // project a reasonable frame in the future to "work that message into"
       // the game engine at BOTH clients.
-      
+
       // Try fiddling around with the value of the NETWORK_DELAY variable. 
       // Setting it very high ( 40 or 50 ) will make the game respond
       // VERY slowly, because you're basically giving messages an entire
@@ -801,29 +802,29 @@ public class Controller : GameComponent
       // the game will get VERY choppy and non-playable.
       #endregion
 
-      
+
       // So here, we ARE walking thru the list
       // of all messages in the processing queue,
       // but we'll only pull out and process the
       // messages that are 'ripe' (ready to be
       // processed).
-      
+
       // Let's check if it is TIME to process
       // the currentMessage:
       if( currentMessage.cmd == NetMessageCommand.GameStart || // for GameStart message, frame irrelevant
           currentMessage.cmd == NetMessageCommand.Sync || // we ALWAYS process sync messages immediately
-          // because its how we COME OUT of the wait state (when the other player
-          // finally sends us a SYNC message that says he has caught up in framage)
+        // because its how we COME OUT of the wait state (when the other player
+        // finally sends us a SYNC message that says he has caught up in framage)
 
           targetFrameToProcess == SPW.currentFrame   // it is time!!
         )
       {
         // It is time to process this message.
-        PROCESS_NET_MESSAGE_CMD( currentMessage ) ;
+        PROCESS_NET_MESSAGE_CMD( currentMessage );
 
         // Now remove it from the queue
-        processing.RemoveAt( i ) ;
-        i-- ;
+        processing.RemoveAt( i );
+        i--;
 
         // All messages that don't get processed remain in
         // the 'processing' queue, waiting for their turn
@@ -848,13 +849,13 @@ public class Controller : GameComponent
 
         // Set NETWORK_DELAY at 10 frames.  Then,
         // say player 2 lags quite a bit, by 8 frames:
-        
+
         // Player 1 is at frame 90
         // Player 2 is at frame 82
 
         // (I know that player 2 can't go back in framage,
         // but just work with this idea here.)
-        
+
         // Now what if Player 2 lags a bit more
 
         // Player 1 is at frame 90
@@ -877,10 +878,10 @@ public class Controller : GameComponent
           " and it is " + SPW.currentFrame + ".  The game has fallen out of sync",
           LogMessageType.Error, OutputDevice.File );
 
-        SPW.sw[ "lostsync" ] = new StringItem( "The game lost sync.", Color.Red ) ;
+        SPW.sw[ "lostsync" ] = new StringItem( "The game lost sync.", Color.Red );
         SPW.sw[ "lostsync2" ] = new StringItem( "This game ends with no winner.", StringItem.Centering.Horizontal, SPW.world.ScreenHeight / 2 + 20 );
 
-        SPW.netState = NetState.Disconnected ;
+        SPW.netState = NetState.Disconnected;
       }
     }
   }
@@ -899,11 +900,11 @@ public class Controller : GameComponent
 
     outgoingMessage.playerNumber = myNetgamePlayerNumber;
 
-    Ship thisShip ;
+    Ship thisShip;
     if( myNetgamePlayerNumber == 1 )
-      thisShip = SPW.world.player1 ;
+      thisShip = SPW.world.player1;
     else
-      thisShip = SPW.world.player2 ;
+      thisShip = SPW.world.player2;
     // poll keyboard for input
     // if there is some input, then send
     // off a message with command
@@ -973,7 +974,7 @@ public class Controller : GameComponent
       else
       {
         // player controls strictly from keyboard
-        
+
         // A player might hold down multiple keys simultaneously,
         // so a player might need to send MORE THAN one message
         // per frame.
@@ -1151,10 +1152,10 @@ public class Controller : GameComponent
       // arbirarily), -- could use ANY other int, just as long as you know
       // its the same seed as the other player is using! )
       // ( Could also have come from server, but we didn't bother )
-      SPW.rand = new Random( 5 ) ;
-      
+      SPW.rand = new Random( 5 );
+
       // Start the game
-      SPW.netState = NetState.Connected ;
+      SPW.netState = NetState.Connected;
 
       // Part of sync (hyperspace direction etc) relies on random
       // number generator generating the SAME NUMBERS, IN THE SAME ORDER
@@ -1170,7 +1171,7 @@ public class Controller : GameComponent
 
       // that's it for this message.  that's all
       // the information it has.
-      return ;
+      return;
     }
     else if( message.cmd == NetMessageCommand.Sync )
     {
@@ -1185,12 +1186,12 @@ public class Controller : GameComponent
         // So, I must ignore it by returning here, without
         // processing it further.
 
-        return ;
+        return;
       }
 
       ////////////////////////////////////////////////////////////////
       // got a sync from the other player, so we can set this now:  //
-      frameOtherGuyWasOnAtLastSync = message.frame ;                //
+      frameOtherGuyWasOnAtLastSync = message.frame;                //
       //                                                            //
       ////////////////////////////////////////////////////////////////
       // Other player has announced what frame he's on,
@@ -1242,10 +1243,10 @@ public class Controller : GameComponent
       // 95 - 105 = -10 frames
       // That negative value will be understood to mean
       // that I am 10 frames behind.
-      framesAhead = SPW.currentFrame - message.frame ;
+      framesAhead = SPW.currentFrame - message.frame;
 
       // See if we are 'TooFarAhead':
-      if( framesAhead > NETWORK_DELAY/2 )
+      if( framesAhead > NETWORK_DELAY / 2 )
       {
         // I am TOO FAR ahead, I must WAIT for the other player to
         // catch up in framage
@@ -1253,10 +1254,10 @@ public class Controller : GameComponent
         SPW.logger.Log( "SYNC message:  You are ahead by " + framesAhead + " frames:  You=" +
           SPW.currentFrame + " /Other=" + message.frame + ")",
           LogMessageType.Warning, OutputDevice.File );
-        
-        SPW.netState = NetState.TooFarAhead ;
+
+        SPW.netState = NetState.TooFarAhead;
       }
-      else if( framesAhead < -NETWORK_DELAY/2 )
+      else if( framesAhead < -NETWORK_DELAY / 2 )
       {
         // I am TOO FAR BEHIND.  I should disconnect
         // input from myself (the behind player) because
@@ -1271,7 +1272,7 @@ public class Controller : GameComponent
         SPW.logger.Log( "SYNC message:  You are behind by " + framesAhead + " frames:  You=" + SPW.currentFrame + " /Other=" + message.frame + ")",
           LogMessageType.Warning, OutputDevice.File );
 
-        SPW.netState = NetState.TooFarBehind ;
+        SPW.netState = NetState.TooFarBehind;
       }
       else
       {
@@ -1279,7 +1280,7 @@ public class Controller : GameComponent
         // "perfect sync"
         SPW.logger.Log( "SYNC message:  Good sync, " + framesAhead + " frames:  You=" + SPW.currentFrame + " /Other=" + message.frame + ")",
           LogMessageType.Info, OutputDevice.File );
-        
+
         SPW.netState = NetState.Connected;
       }
 
@@ -1291,7 +1292,7 @@ public class Controller : GameComponent
       // it doesn't need to - its already been handled here.
       // its not part of the switch because we left that part
       // to strictly deal with player ship manipulation messages.
-      return ;
+      return;
     }
 
     // Next, we process all the other types of
@@ -1314,14 +1315,14 @@ public class Controller : GameComponent
     // This section of code is THE ONLY section of code
     // that changes the player's positions, missile shootings,
     // etc. when in a netgame mode.
-    Ship thePlayer ;
+    Ship thePlayer;
     if( message.playerNumber == 1 )
-      thePlayer = SPW.world.player1 ;
+      thePlayer = SPW.world.player1;
     else
-      thePlayer = SPW.world.player2 ;
-   
-    SPW.logger.Log( "PROCESSING " + message.ToString() + " currentFrame=" + SPW.currentFrame, LogMessageType.Info, OutputDevice.File ) ;
-    
+      thePlayer = SPW.world.player2;
+
+    SPW.logger.Log( "PROCESSING " + message.ToString() + " currentFrame=" + SPW.currentFrame, LogMessageType.Info, OutputDevice.File );
+
     switch( message.cmd )
     {
       // 9 actions the player can take
@@ -1344,7 +1345,7 @@ public class Controller : GameComponent
       case NetMessageCommand.IncreaseThrust:
         thePlayer.IncreaseThrust();
         break;
-  
+
       case NetMessageCommand.RotateRight:
         thePlayer.RotateRight();
         break;
@@ -1356,13 +1357,13 @@ public class Controller : GameComponent
       case NetMessageCommand.Cloak:
         thePlayer.Cloak();
         break;
-      
+
       case NetMessageCommand.ShootTorpedos:
         thePlayer.ShootTorpedos();
         break;
 
       default:
-        SPW.logger.Log("Holy spumoni batman!  There was an invalid message passed.  Details: " + message.ToString(), LogMessageType.Error, OutputDevice.File | OutputDevice.Screen ) ;
+        SPW.logger.Log( "Holy spumoni batman!  There was an invalid message passed.  Details: " + message.ToString(), LogMessageType.Error, OutputDevice.File | OutputDevice.Screen );
         break;
     }
     #endregion
@@ -1375,6 +1376,15 @@ public class Controller : GameComponent
   /// </summary>
   private void RunTitleScreenControls()
   {
+    if( SPW.windowing.IsModalDialogAlreadyDisplaying )
+    {
+      // If the dialog box is already displaying, then
+      // DO NOT "launch" anything else.  For example,
+      // do not start the test mode if the person
+      // types T when trying to log in.
+      return;
+    }
+
     if( JustPressed( Keys.Space ) )
     {
       game.ResetGameInternals();
@@ -1614,7 +1624,7 @@ public class Controller : GameComponent
 
   public void Shutdown()
   {
-    netConn.Shutdown() ;
+    netConn.Shutdown();
   }
   #endregion
 
@@ -1739,7 +1749,7 @@ public struct DelayMetrics
   // A count of the total delay (running sum
   // of lastMessageTransportTime
   private int totalFrameDelay;
-  public int TotalFrameDelay{ get { return totalFrameDelay ; } } // protection for totalFrameDelay
+  public int TotalFrameDelay { get { return totalFrameDelay; } } // protection for totalFrameDelay
   // as it should NOT be set by the user (user should ONLY be setting
   // LastMessageTransportTime, using ITS setter.
 

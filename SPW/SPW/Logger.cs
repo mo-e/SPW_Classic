@@ -58,7 +58,7 @@ public class Logger : DrawableGameComponent
   // not exposing the "bool enabled" variable
   // as a public variable is because I like the look of
   //    logger.Disable()
-  
+
   // vs
   //    logger.enabled = false ;
 
@@ -76,17 +76,17 @@ public class Logger : DrawableGameComponent
   #region file out related
   // file handle stuff.
   private TextWriter logfileHandle;
-  public string Filename ;
+  public string Filename;
   //
 
-  
+
   public Logger( Game g, bool doAppend )
     : base( g )
   {
     history = new List<LogMessage>();
 
-    newMessagesAtTop = false ;
-    enabled = true ;
+    newMessagesAtTop = false;
+    enabled = true;
 
     // By default, output to console, screen and file.
     // This can be changed at any time.
@@ -103,18 +103,18 @@ public class Logger : DrawableGameComponent
     DateTime now = DateTime.Now;
 
     Filename = SPW.path + "GameLog_" + CurrentTimestamp + ".txt";
-    
+
     // open.
     logfileHandle = new StreamWriter( Filename, doAppend );  // yes, DO append to end of file
 
     // make thread-safe by using a synchronized wrapper
     // around our logfileHandle object instead of
     // logfileHandle object directly
-    logfileHandle = StreamWriter.Synchronized( logfileHandle ) ;
+    logfileHandle = StreamWriter.Synchronized( logfileHandle );
 
     logfileHandle.WriteLine();
     logfileHandle.WriteLine( "[" + now.ToLongDateString() + " " + now.ToLongTimeString() + "] [" + LogMessageType.Info + "] Startup" );
-    
+
   }
 
   protected override void LoadContent()
@@ -148,7 +148,7 @@ public class Logger : DrawableGameComponent
     if( doTimestamp )
     {
       DateTime now = DateTime.Now;
-      msg.Append( "[" + now.ToString( "HH:mm:ss" ) + "] " + "["+SPW.currentFrame+"] "/*Spw: add the frame count stamp*/ );
+      msg.Append( "[" + now.ToString( "HH:mm:ss" ) + "] " + "[" + SPW.currentFrame + "] "/*Spw: add the frame count stamp*/ );
     }
 
     msg.Append( "[" + type + "] " );
@@ -162,16 +162,19 @@ public class Logger : DrawableGameComponent
     {
       // Create a LogMessage object, which is just the struct type
       // that keeps all info about the screen-displayable message
-      LogMessage logMessage = new LogMessage( annotatedMsg ) ;
+
+      // history is how the drawing routine knows what to draw.
+      // if not in history, never drawn.
+      LogMessage logMessage = new LogMessage( annotatedMsg );
 
       // Now alter the color depending on the message type
       if( type == LogMessageType.Error )
-        logMessage.color = Color.Red ;
+        logMessage.color = Color.Red;
       else if( type == LogMessageType.Warning )
         logMessage.color = Color.Yellow;
       else
-        logMessage.color = Color.Gray ;
-      
+        logMessage.color = Color.Gray;
+
       // make translucent, so log messages aren't overly intrusive
       //logMessage.color.A = 100 ;
 
@@ -180,25 +183,24 @@ public class Logger : DrawableGameComponent
       // we can't have multiple threads accessing the
       // history List at the same time else it will
       // get corrupted and throw an exception
-      lock( this.history )
+
+      // Only add to log message if not over 15 messages
+      if( history.Count <= 15 )
       {
-        // This is protection for the logging system from being overflooded
-        if( history.Count == 15 )
+        lock( this.history )
         {
-          LogMessage overMsg = new LogMessage( "There were more... but they're not being displayed (too many messages).  See log file." ) ;
-          history.Add( overMsg );
-        }
-        else if( history.Count < 15 )
-        {
-          // Construct a LogMessage object and add it to the history.
+          // This is protection for the logging system from being overflooded
+          if( history.Count == 15 )  // hit limit now.  this is the last message.
+          {
+            logMessage.message = "-> " + logMessage.message + "(<- last message before overflow.  See log file.)";
+          }
+
           history.Add( logMessage );
-          // history is how the drawing routine knows what to draw.
-          // if not in history, never drawn.
         }
-        else
-        {
-          // you're over, so don't display anything
-        }
+      }
+      else
+      {
+        // you're over, so don't display anything
       }
     }
     if( EnumHelper<OutputDevice>.ContainsFlag( where, OutputDevice.File ) )
@@ -273,7 +275,7 @@ public class Logger : DrawableGameComponent
     {
       foreach( LogMessage lm in history )
       {
-        lm.life = 10.0f ;
+        lm.life = 10.0f;
       }
     }
   }
@@ -283,7 +285,7 @@ public class Logger : DrawableGameComponent
     lock( this.history )
     {
       if( history.Count > 0 )
-        history.RemoveAt( 0 ) ;
+        history.RemoveAt( 0 );
     }
   }
 
@@ -292,7 +294,7 @@ public class Logger : DrawableGameComponent
     lock( this.history )
     {
       if( history.Count > 0 )
-        history.RemoveAt( history.Count - 1 ) ;
+        history.RemoveAt( history.Count - 1 );
     }
   }
 
@@ -329,14 +331,14 @@ public class Logger : DrawableGameComponent
         {
           LogMessage lm = history[ i ];
 
-          float y ;
+          float y;
 
-          
+
           if( newMessagesAtTop )
             y = 20 + ( 20 * ( history.Count - i - 1 ) );  //message add-in at top of list ( don't like )
           else
             y = 20 + ( 20 * i ); //message add-in at bottom of list (looks better, but shifts when they disappear).
-          
+
 
           sb.DrawString( sf,
                          lm.message,
@@ -384,7 +386,7 @@ public class FileLogger
   // file handle stuff.
   private TextWriter logfileHandle;
   //
-  public string Filename ;
+  public string Filename;
 
   #region enabling / disabling
   private bool enabled;
@@ -424,7 +426,7 @@ public class FileLogger
     get
     {
       DateTime now = DateTime.Now;
-      return now.ToString( "MMM_dd_yy__HH_mm_ss_ffffff" ) ;
+      return now.ToString( "MMM_dd_yy__HH_mm_ss_ffffff" );
     }
   }
 
@@ -539,7 +541,7 @@ public enum OutputDevice
   /// Output to both the screen and the log file
   /// </summary>
   ScreenAndFile = 9,    // 1001
-  
+
   ALL = 15              // 1111
 
 };
@@ -552,7 +554,7 @@ public class LogMessage
   // Drawable ones have color
   public Color color;
   public float life;
-  public float fadeTime ;
+  public float fadeTime;
 
   public static float DEFAULT_FADETIME = 5.0f; // how many seconds to fade out over
   public static float DEFAULT_LIFETIME = 20.0f; // default number of seconds for new messages to live for
@@ -566,7 +568,7 @@ public class LogMessage
     message = i_message;
     color = Color.White;
     life = DEFAULT_LIFETIME;
-    fadeTime = DEFAULT_FADETIME ;
+    fadeTime = DEFAULT_FADETIME;
   }
 
   public void ReduceLife( float by )

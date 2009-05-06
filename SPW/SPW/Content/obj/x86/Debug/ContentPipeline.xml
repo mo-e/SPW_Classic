@@ -7,7 +7,7 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\screenwriterFont.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\screenwriterFont.xnb</Output>
       <Time>2009-02-23T17:33:53.3754159-05:00</Time>
     </Item>
     <Item>
@@ -16,7 +16,7 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultFont.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultFont.xnb</Output>
       <Time>2009-03-18T21:55:51.0625-05:00</Time>
     </Item>
     <Item>
@@ -25,7 +25,7 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultHeading.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Fonts\DefaultHeading.xnb</Output>
       <Time>2009-03-18T21:55:51.0625-05:00</Time>
     </Item>
     <Item>
@@ -34,8 +34,8 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\loggerFont.xnb</Output>
-      <Time>2009-03-20T15:14:04.1875-05:00</Time>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\loggerFont.xnb</Output>
+      <Time>2009-03-24T11:10:42.90625-05:00</Time>
     </Item>
     <Item>
       <Source>alarm.wav</Source>
@@ -43,7 +43,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\alarm.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\alarm.xnb</Output>
       <Time>2009-02-23T20:23:12.4535409-05:00</Time>
     </Item>
     <Item>
@@ -52,7 +52,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\blow_up.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\blow_up.xnb</Output>
       <Time>2009-02-23T20:23:12.4222909-05:00</Time>
     </Item>
     <Item>
@@ -61,7 +61,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\hyperspace.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\hyperspace.xnb</Output>
       <Time>2009-02-23T20:23:12.4222909-05:00</Time>
     </Item>
     <Item>
@@ -70,7 +70,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\phasor.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\phasor.xnb</Output>
       <Time>2009-02-23T20:23:12.4222909-05:00</Time>
     </Item>
     <Item>
@@ -79,7 +79,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\torpedo.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\torpedo.xnb</Output>
       <Time>2009-02-23T20:23:12.4222909-05:00</Time>
     </Item>
     <Item>
@@ -88,7 +88,7 @@
       <Importer>WavImporter</Importer>
       <Processor>SoundEffectProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\explode.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\explode.xnb</Output>
       <Time>2009-03-03T12:37:11.859375-05:00</Time>
     </Item>
     <Item>
@@ -97,7 +97,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\Textures\Black.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Textures\Black.xnb</Output>
       <Time>2009-03-18T21:44:09.6875-05:00</Time>
     </Item>
     <Item>
@@ -106,7 +106,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\Textures\DefaultStyle.xnb</Output>
+      <Output>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\Textures\DefaultStyle.xnb</Output>
       <Time>2009-03-18T21:44:09.71875-05:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
@@ -114,10 +114,10 @@
       <TargetPlatform>Windows</TargetPlatform>
       <BuildConfiguration>Debug</BuildConfiguration>
       <CompressContent>false</CompressContent>
-      <RootDirectory>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\Content\</RootDirectory>
-      <LoggerRootDirectory>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\</LoggerRootDirectory>
-      <IntermediateDirectory>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\Content\obj\x86\Debug\</IntermediateDirectory>
-      <OutputDirectory>C:\CPP\Projects\2009\working PROJECTS\SPW\SPW\bin\x86\Debug\Content\</OutputDirectory>
+      <RootDirectory>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\Content\</RootDirectory>
+      <LoggerRootDirectory>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\</LoggerRootDirectory>
+      <IntermediateDirectory>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\Content\obj\x86\Debug\</IntermediateDirectory>
+      <OutputDirectory>C:\CPP\Projects\2009\INFR4310U\4310\SPW\SPW\bin\x86\Debug\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>

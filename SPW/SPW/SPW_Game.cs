@@ -73,7 +73,7 @@ public class SPW : Microsoft.Xna.Framework.Game
   // (used for log files and screenshots)
   public static string path = ""; //!! change to wherever you want your log files dumped
 
-  public static bool showDebug = true ;
+  public static bool showDebug = true;
 
   // Because these are STATIC variables, they
   // are accessible game-wide, by typing in
@@ -107,7 +107,7 @@ public class SPW : Microsoft.Xna.Framework.Game
   /// We basically want "currentFrame" to match up for both players
   /// as closely as possible as the game proceeds.
   /// </summary>
-  public static int currentFrame = 0 ;
+  public static int currentFrame = 0;
 
   /// <summary>
   /// Static member accessible from anywhere,
@@ -127,8 +127,8 @@ public class SPW : Microsoft.Xna.Framework.Game
   /// <summary>
   /// Logs to the screen, a file, or the console.
   /// </summary>
-  public static Logger logger ;
-  
+  public static Logger logger;
+
 
   // Game component - the controller object.
   // The Controller object contains ALL the code
@@ -236,7 +236,7 @@ public class SPW : Microsoft.Xna.Framework.Game
 
 
     logger = new Logger( this, true );
-    this.Components.Add( logger ) ;
+    this.Components.Add( logger );
 
     // Create the Windowing object.
     // The source code for this system
@@ -264,8 +264,8 @@ public class SPW : Microsoft.Xna.Framework.Game
 
     // Start with debug messages not being displayed on screen
     // (press '8' to toggle)
-    ToggleDebug();
-    
+    //ToggleDebug();
+
   }
   #endregion
 
@@ -347,6 +347,11 @@ public class SPW : Microsoft.Xna.Framework.Game
         RunTitle( gameTime );
         break;
 
+      case GameState.GameOver:
+        // The game is over!  Run the clean up code
+        RunGameover( gameTime );
+        break;
+
       // are we running a local game?
       case GameState.LocalGame:
         // This RunGame function is THE CORE
@@ -405,7 +410,7 @@ public class SPW : Microsoft.Xna.Framework.Game
     // check for screenshot.
     // take a screenshot by pressing '9'
     checkScreenShot();
-    
+
     base.Update( gameTime );
   }
 
@@ -413,26 +418,31 @@ public class SPW : Microsoft.Xna.Framework.Game
   // Code that runs when sitting at the title screen.
   private void RunTitle( GameTime gameTime )
   {
-    int startX = 40 ;
-    int startY = 60 ;
+    // nothing to do
+  }
 
-    // Just display messages telling the player what to do
-    sw[ "Title" ] = new StringItem( "SPACE WARS", StringItem.Centering.Horizontal, startY += 20, 0 );
+  private void RunGameover( GameTime gameTime )
+  {
+    // Shut down network connection
+    if( netState == NetState.Connected )
+    {
+      c.netConn.Shutdown();
 
-    sw[ "waiting" ] = new StringItem( "Press 'C' to Connect ...", startX, startY += 220, 0, Color.Gray );
+      // Now its disconnected
+      netState = NetState.Disconnected;
+    }
 
-    // if he pushes space, Controller will start the game.
-    sw[ "PushKey" ] = new StringItem( "Spacebar to play locally", startX, startY += 20, 0, Color.Gray );
-
-    //sw[ "test" ] = new StringItem( "'T' to test the quality of your network connection", startX, startY += 20, 1.0f, Color.Gray );
+    // The gameover state only lasts for EXACTLY one frame
+    // before switching back to the title screen.
+    gameState = GameState.TitleScreen;
   }
 
   // Method that steps the game forwards one frame
   private void RunGame( GameTime gameTime )
   {
     // Advance frame step number.
-    currentFrame++ ;
-    
+    currentFrame++;
+
 
     float stepTime = (float)gameTime.ElapsedGameTime.Ticks / TimeSpan.TicksPerSecond;
 
@@ -506,7 +516,7 @@ public class SPW : Microsoft.Xna.Framework.Game
     // check for player-player collisions
     // No collisions can happen if either one is in hyperspace
     if( player1.state != ShipState.Hyperspace && player2.state != ShipState.Hyperspace &&
-        player1.state != ShipState.BlowingUp  && player2.state != ShipState.BlowingUp )
+        player1.state != ShipState.BlowingUp && player2.state != ShipState.BlowingUp )
     {
       if( player1.Intersects( player2 ) )
       {
@@ -537,7 +547,7 @@ public class SPW : Microsoft.Xna.Framework.Game
     // back to the title screen
     if( player1.dead || player2.dead )
     {
-      gameState = GameState.TitleScreen;
+      gameState = GameState.GameOver;
     }
   }
 
@@ -621,6 +631,10 @@ public class SPW : Microsoft.Xna.Framework.Game
     // First, clear off all stuff from previous frame.
     GraphicsDevice.Clear( Color.Black );
 
+    // Show debug if it is on.
+    if( showDebug )
+      ShowDebug();
+
     // Now, take a look at game state.
     switch( gameState )
     {
@@ -628,6 +642,13 @@ public class SPW : Microsoft.Xna.Framework.Game
         // We are at the title screen.  So,
         // just draw relevant stuff for the TitleScreen.
         DrawTitle( gameTime );
+        break;
+
+      case GameState.GameOver:
+
+        // Draw out the game over message (prints who won)
+        DrawGameover( gameTime );
+
         break;
 
       case GameState.LocalGame:
@@ -643,21 +664,25 @@ public class SPW : Microsoft.Xna.Framework.Game
     base.Draw( gameTime );
   }
 
+  /// <summary>Just display messages telling the player what to do</summary>
   private void DrawTitle( GameTime gameTime )
   {
-    ////ShowDebug();
+    int startX = 40;
+    int startY = 60;
 
-    if( world.player1.dead == true )
-    {
-      // I just don't like these to show anymore
-      //sw[ "player1lose" ] = new StringItem( "Player 1 has died", 40, 180, 0 );
-    }
+    sw[ "Title" ] = new StringItem( "SPACE WARS", StringItem.Centering.Horizontal, startY += 20, 0 );
 
-    if( world.player2.dead == true )
-    {
-      //sw[ "player2lose" ] = new StringItem( "Player 2 has died", 40, 200, 0 );
-    }
+    sw[ "waiting" ] = new StringItem( "Press 'C' to Connect ...", startX, startY += 220, 0, Color.Gray );
 
+    // if he pushes space, Controller will start the game.
+    sw[ "PushKey" ] = new StringItem( "Spacebar to play locally", startX, startY += 20, 0, Color.Gray );
+
+    //sw[ "test" ] = new StringItem( "'T' to test the quality of your network connection", startX, startY += 20, 1.0f, Color.Gray );
+  }
+
+  /// <summary>Draws the game over screen</summary>
+  private void DrawGameover( GameTime gameTime )
+  {
     // if it was a netgame, then also tell the player if he won or lost
     // ### This is again YOUR PART:  Add code to record win or loss in database here.
     #region tell if won or lost the netgame
@@ -666,6 +691,7 @@ public class SPW : Microsoft.Xna.Framework.Game
       string winMsg = "YOU WON YEAHAHEAH";
       string loseMsg = "YOU LOST";
       float displayTime = 3.0f;
+
       if( Controller.myNetgamePlayerNumber == 1 )
       {
         // here, you are player 1
@@ -697,16 +723,26 @@ public class SPW : Microsoft.Xna.Framework.Game
         }
       }
     }
+    else
+    {
+      // Must have been a local game.  Tell who won.
+      if( world.player1.dead == true )
+      {
+        sw[ "player1lose" ] = new StringItem( "Player 1 has died", Color.Red, 3.0f );
+      }
+
+      if( world.player2.dead == true )
+      {
+        sw[ "player2lose" ] = new StringItem( "Player 2 has died", Color.Red, 3.0f );
+      }
+    }
+
     #endregion
   }
 
-  // Draws the game
+  /// <summary>Draws the game</summary>
   private void DrawGame( GameTime gameTime )
   {
-    if( showDebug )
-      ShowDebug();
-
-
     spriteBatch.Begin();
 
     foreach( Sprite star in world.stars )
@@ -752,12 +788,39 @@ public class SPW : Microsoft.Xna.Framework.Game
     FlatShapes.Begin();
     if( player1.phasor.isActive )
     {
+      // draw the original phasor
       FlatShapes.Line( player1.position, player1.phasor.getEndOfReachPoint() );
+
+      // draw the duplicate, wrapped phasor if the
+      // original phasor intersects any of the edges
+      // of the game world
+      Ray? dupeRay = player1.phasor.GetDupeRay();
+
+      if( dupeRay != null )  // then draw the duperay
+      {
+        Vector3 start, end;
+        start = dupeRay.Value.Position;
+        end = dupeRay.Value.Position + dupeRay.Value.Direction * Phasor.MAX_REACH;
+        FlatShapes.Line( start.X, start.Y, end.X, end.Y );
+      }
     }
 
     if( player2.phasor.isActive )
     {
       FlatShapes.Line( player2.position, player2.phasor.getEndOfReachPoint() );
+
+      // draw the duplicate, wrapped phasor if the
+      // original phasor intersects any of the edges
+      // of the game world
+      Ray? dupeRay = player2.phasor.GetDupeRay();
+
+      if( dupeRay != null )  // then draw the duperay
+      {
+        Vector3 start, end;
+        start = dupeRay.Value.Position;
+        end = dupeRay.Value.Position + dupeRay.Value.Direction * Phasor.MAX_REACH;
+        FlatShapes.Line( start.X, start.Y, end.X, end.Y );
+      }
     }
 
 
@@ -870,7 +933,7 @@ public class SPW : Microsoft.Xna.Framework.Game
     // sleep a bit, to make sure that the network stuff
     // shuts down, before shutting down the logger (because
     // the network stuff logs its shut down info)
-    System.Threading.Thread.Sleep( 50 ) ;
+    System.Threading.Thread.Sleep( 50 );
     logger.Shutdown();
 
     base.OnExiting( sender, args );
